@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@layer utilities {
+    .animate-float {
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .animate-pulse-glow {
+        animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+
+        0%,
+        100% {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);
+        }
+
+        50% {
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.3);
+        }
+    }
+
+    @keyframes float {
+        0% {
+            transform: translateY(0px);
+        }
+
+        50% {
+            transform: translateY(-20px);
+        }
+
+        100% {
+            transform: translateY(0px);
+        }
+    }
+}
+
+@theme {
+    --color-octo-dark: #0a0e1a;
+    --color-octo-darker: #060911;
+    --color-octo-accent: #3b82f6;
+    --color-octo-accent-dark: #2563eb;
+    --color-octo-gray: #1e293b;
+    --color-octo-gray-light: #334155;
+    --color-octo-border: #1e293b;
+
+    --font-sans: Inter, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", Consolas, monospace;
+}
+
+/* Custom scrollbar from original HTML */
+::-webkit-scrollbar {
+    display: none;
+}
+
+body {
+    @apply bg-octo-darker text-gray-100 font-sans antialiased;
+}
