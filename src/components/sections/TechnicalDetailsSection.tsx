@@ -10,7 +10,7 @@ const TechnicalDetailsSection: Component = () => {
                         Precise specifications for engineers evaluating Octopilot
                     </p>
                 </div>
-                <div class="grid grid-cols-3 gap-6 mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                     <div class="bg-octo-gray/30 border border-octo-border rounded-lg p-6">
                         <h4 class="text-white font-bold mb-4 flex items-center">
                             <i class="fa-solid fa-key text-octo-accent mr-3"></i>
@@ -95,7 +95,7 @@ const TechnicalDetailsSection: Component = () => {
                         <i class="fa-solid fa-diagram-project text-octo-accent mr-3"></i>
                         Deployment Architecture
                     </h3>
-                    <div class="grid grid-cols-2 gap-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
                             <h4 class="text-white font-bold mb-3">Octopilot SaaS (Commercial)</h4>
                             <ul class="space-y-2 text-sm text-gray-400">

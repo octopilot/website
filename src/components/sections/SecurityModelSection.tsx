@@ -21,7 +21,7 @@ const SecurityModelSection: Component = () => {
                             <p class="text-gray-300 leading-relaxed mb-6">
                                 Repository-local encrypted secrets are designed for flexibility across your entire development and deployment lifecycle. The same encrypted files can be safely decrypted in multiple contexts without compromising security or requiring centralized infrastructure.
                             </p>
-                            <div class="grid grid-cols-2 gap-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="bg-octo-dark/50 border border-blue-500/20 rounded-lg p-5">
                                     <div class="flex items-center space-x-3 mb-3">
                                         <i class="fa-solid fa-laptop-code text-blue-400 text-lg"></i>
@@ -71,7 +71,7 @@ const SecurityModelSection: Component = () => {
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-8 mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
                     <div class="bg-octo-gray/30 border-2 border-green-500/30 rounded-xl p-8">
                         <div class="flex items-center space-x-3 mb-6">
                             <div class="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center">
@@ -85,7 +85,7 @@ const SecurityModelSection: Component = () => {
                                     <i class="fa-solid fa-check-circle text-green-400 mr-3"></i>
                                     Secrets never leave encrypted form
                                 </h4>
-                                <p class="text-gray-400 text-sm pl-8">
+                                <p class="text-gray-400 text-sm">
                                     Octopilot never receives, processes, or stores plaintext secrets. All secrets remain encrypted in repositories.
                                 </p>
                             </div>
@@ -94,7 +94,7 @@ const SecurityModelSection: Component = () => {
                                     <i class="fa-solid fa-check-circle text-green-400 mr-3"></i>
                                     Decryption in authorized contexts only
                                 </h4>
-                                <p class="text-gray-400 text-sm pl-8">
+                                <p class="text-gray-400 text-sm">
                                     Secrets are decrypted only where explicitly authorized: local dev machines, CI pipelines, Kubernetes clusters, or serverless platforms. Octopilot never performs decryption.
                                 </p>
                             </div>
@@ -103,7 +103,7 @@ const SecurityModelSection: Component = () => {
                                     <i class="fa-solid fa-check-circle text-green-400 mr-3"></i>
                                     No cluster credentials required
                                 </h4>
-                                <p class="text-gray-400 text-sm pl-8">
+                                <p class="text-gray-400 text-sm">
                                     Octopilot does not require access to your Kubernetes clusters, cloud credentials, or infrastructure.
                                 </p>
                             </div>
@@ -112,7 +112,7 @@ const SecurityModelSection: Component = () => {
                                     <i class="fa-solid fa-check-circle text-green-400 mr-3"></i>
                                     Repository-scoped access only
                                 </h4>
-                                <p class="text-gray-400 text-sm pl-8">
+                                <p class="text-gray-400 text-sm">
                                     GitHub App permissions are limited to reading repository metadata and writing signed GPG public keys via pull requests.
                                 </p>
                             </div>
@@ -121,7 +121,7 @@ const SecurityModelSection: Component = () => {
                                     <i class="fa-solid fa-check-circle text-green-400 mr-3"></i>
                                     Cryptographic verification
                                 </h4>
-                                <p class="text-gray-400 text-sm pl-8">
+                                <p class="text-gray-400 text-sm">
                                     All GPG keys are cryptographically signed by Octopilot's authority. Signature verification ensures key authenticity.
                                 </p>
                             </div>
@@ -140,7 +140,7 @@ const SecurityModelSection: Component = () => {
                                     <i class="fa-solid fa-xmark text-orange-400 mr-3"></i>
                                     Does not handle plaintext secrets
                                 </h4>
-                                <p class="text-gray-400 text-sm pl-8">
+                                <p class="text-gray-400 text-sm">
                                     Octopilot never receives, decrypts, or processes secrets in plaintext form under any circumstance.
                                 </p>
                             </div>
@@ -149,7 +149,7 @@ const SecurityModelSection: Component = () => {
                                     <i class="fa-solid fa-xmark text-orange-400 mr-3"></i>
                                     Does not store secrets
                                 </h4>
-                                <p class="text-gray-400 text-sm pl-8">
+                                <p class="text-gray-400 text-sm">
                                     Secrets remain in repositories. Octopilot stores only GPG key metadata and signatures, never secret values.
                                 </p>
                             </div>
@@ -158,7 +158,7 @@ const SecurityModelSection: Component = () => {
                                     <i class="fa-solid fa-xmark text-orange-400 mr-3"></i>
                                     Does not access Kubernetes clusters
                                 </h4>
-                                <p class="text-gray-400 text-sm pl-8">
+                                <p class="text-gray-400 text-sm">
                                     No cluster credentials, kubeconfig files, or cloud provider access. Octopilot operates entirely at the GitHub layer.
                                 </p>
                             </div>
@@ -167,7 +167,7 @@ const SecurityModelSection: Component = () => {
                                     <i class="fa-solid fa-xmark text-orange-400 mr-3"></i>
                                     Does not share keys across repositories
                                 </h4>
-                                <p class="text-gray-400 text-sm pl-8">
+                                <p class="text-gray-400 text-sm">
                                     Each repository has its own unique GPG key pair. Key reuse is prevented by policy enforcement.
                                 </p>
                             </div>
@@ -176,7 +176,7 @@ const SecurityModelSection: Component = () => {
                                     <i class="fa-solid fa-xmark text-orange-400 mr-3"></i>
                                     Does not require code changes
                                 </h4>
-                                <p class="text-gray-400 text-sm pl-8">
+                                <p class="text-gray-400 text-sm">
                                     Applications continue using existing encrypted files. No SDK, agent, or code modification required.
                                 </p>
                             </div>
@@ -193,7 +193,7 @@ const SecurityModelSection: Component = () => {
                             <p class="text-gray-300 leading-relaxed mb-4">
                                 Octopilot operates as a <strong>signing authority</strong>, not a secret manager. Its role is to cryptographically sign GPG public keys, establishing verifiable trust without ever handling sensitive data. This trust model is similar to certificate authorities in PKI: Octopilot attests to key authenticity, while secrets remain encrypted and under repository ownership.
                             </p>
-                            <div class="grid grid-cols-3 gap-4 mt-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                                 <div class="bg-octo-dark/50 border border-blue-500/20 rounded-lg p-4">
                                     <h4 class="text-white font-bold mb-2 text-sm">GitHub App</h4>
                                     <p class="text-gray-400 text-xs">Limited repository metadata access, PR creation only</p>

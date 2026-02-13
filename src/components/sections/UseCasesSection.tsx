@@ -10,7 +10,7 @@ const UseCasesSection: Component = () => {
                         Organizations that need to govern repository-local secrets at scale
                     </p>
                 </div>
-                <div class="grid grid-cols-2 gap-8 mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
                     <div class="bg-octo-gray/30 border border-octo-border rounded-xl p-8 hover:border-octo-accent/50 transition-colors">
                         <div class="flex items-center space-x-4 mb-6">
                             <div class="w-14 h-14 bg-blue-500/10 rounded-lg flex items-center justify-center">

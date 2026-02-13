@@ -17,7 +17,7 @@ const Step4KeyCommit: Component = () => {
                         </p>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="bg-octo-gray/30 border border-octo-border rounded-xl p-8">
                         <h3 class="text-xl font-bold text-white mb-6 flex items-center">
                             <i class="fa-brands fa-github text-octo-accent mr-3"></i>

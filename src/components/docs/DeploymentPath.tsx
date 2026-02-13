@@ -11,7 +11,7 @@ const DeploymentPath: Component = () => {
 
                 <h2 class="text-4xl font-bold text-white mb-12">Choose Your Deployment Path</h2>
 
-                <div class="grid grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="bg-gradient-to-br from-blue-950/30 to-slate-900 border border-blue-900/50 rounded-xl p-8 hover:border-blue-500/50 transition-all cursor-pointer group">
                         <div class="flex items-center gap-4 mb-6">
                             <div class="w-16 h-16 bg-blue-500/20 rounded-lg flex items-center justify-center">

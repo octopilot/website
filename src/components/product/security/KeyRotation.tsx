@@ -11,7 +11,7 @@ const KeyRotation: Component = () => {
 
                 <h2 class="text-4xl font-bold text-white mb-12">Automated Key Rotation & Re-Encryption</h2>
 
-                <div class="grid grid-cols-2 gap-8 mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
                     <div class="bg-octo-dark/50 border border-octo-border rounded-xl p-8">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center">

@@ -11,7 +11,7 @@ const FlowOverview: Component = () => {
                     </p>
                 </div>
                 <div class="bg-octo-dark border border-octo-border rounded-xl p-8">
-                    <div class="grid grid-cols-5 gap-4 mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
                         <div class="text-center">
                             <div class="w-16 h-16 bg-octo-accent/10 border-2 border-octo-accent rounded-full flex items-center justify-center mx-auto mb-3">
                                 <span class="text-2xl font-bold text-octo-accent">1</span>

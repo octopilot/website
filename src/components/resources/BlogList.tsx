@@ -31,7 +31,7 @@ const BlogList: Component = () => {
                             <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
                         </div>
 
-                        <div class="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0">
+                        <div class="flex items-center gap-3 flex-wrap justify-center md:justify-end pb-2 md:pb-0">
                             <button
                                 class={`px-5 py-3 border rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap ${filter() === 'All' ? 'bg-octo-accent border-octo-accent text-white' : 'bg-octo-darker border-octo-border text-gray-400 hover:text-white'}`}
                                 onClick={() => setFilter('All')}

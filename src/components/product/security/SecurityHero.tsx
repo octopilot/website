@@ -2,7 +2,7 @@ import type { Component } from 'solid-js';
 
 const SecurityHero: Component = () => {
     return (
-        <section id="enterprise-hero" class="h-[700px] relative overflow-hidden border-b border-octo-border pt-20">
+        <section id="enterprise-hero" class="min-h-[700px] h-auto relative overflow-hidden border-b border-octo-border py-20">
             <div class="absolute inset-0 bg-gradient-to-b from-indigo-950/40 to-transparent"></div>
             <div class="absolute inset-0" style="background-image: radial-gradient(circle at 50% 40%, rgba(99, 102, 241, 0.15) 0%, transparent 60%);"></div>
 
@@ -25,16 +25,16 @@ const SecurityHero: Component = () => {
                     From solo developers to multi-team enterprises—understand how secret-controller-manager scales with cryptographic isolation, audit logging, key rotation, and compliance automation across your entire organization.
                 </p>
 
-                <div class="flex items-center gap-4">
-                    <button class="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition-colors font-semibold flex items-center gap-2">
+                <div class="flex flex-col sm:flex-row items-center gap-4">
+                    <button class="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2">
                         <i class="fa-solid fa-shield-halved"></i>
                         View Security Architecture
                     </button>
-                    <button class="px-8 py-4 bg-octo-gray hover:bg-octo-gray-light text-white rounded-lg transition-colors font-semibold flex items-center gap-2">
+                    <button class="w-full sm:w-auto px-8 py-4 bg-octo-gray hover:bg-octo-gray-light text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2">
                         <i class="fa-solid fa-file-contract"></i>
                         Download Compliance Guide
                     </button>
-                    <button class="px-8 py-4 border border-slate-700 hover:border-slate-600 text-white rounded-lg transition-colors font-semibold flex items-center gap-2">
+                    <button class="w-full sm:w-auto px-8 py-4 border border-slate-700 hover:border-slate-600 text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2">
                         <i class="fa-solid fa-users"></i>
                         Talk to Enterprise Team
                     </button>

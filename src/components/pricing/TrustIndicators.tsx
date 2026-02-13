@@ -4,7 +4,7 @@ const TrustIndicators: Component = () => {
     return (
         <section id="trust-indicators" class="py-16 bg-octo-darker border-t border-octo-border">
             <div class="max-w-[1200px] mx-auto px-8">
-                <div class="grid grid-cols-4 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     <div class="text-center">
                         <div class="w-16 h-16 bg-green-500/10 rounded-lg flex items-center justify-center mx-auto mb-4">
                             <i class="fa-solid fa-shield-halved text-green-400 text-2xl"></i>

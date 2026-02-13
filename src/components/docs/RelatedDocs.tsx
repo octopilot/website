@@ -6,7 +6,7 @@ const RelatedDocs: Component = () => {
             <div class="max-w-[1200px] mx-auto px-8">
                 <h2 class="text-3xl font-bold text-white mb-8">Related Documentation</h2>
 
-                <div class="grid grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-blue-500/50 transition-all cursor-pointer group">
                         <div class="flex items-center gap-3 mb-4">
                             <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">

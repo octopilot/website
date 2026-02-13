@@ -89,14 +89,14 @@ const ComparisonSection: Component = () => {
                     </table>
                 </div>
                 <div class="mt-8 bg-octo-gray/30 border border-octo-border rounded-lg p-6">
-                    <div class="flex items-start space-x-4">
-                        <i class="fa-solid fa-lightbulb text-yellow-400 text-xl mt-1"></i>
-                        <div>
-                            <h4 class="text-white font-bold mb-2">Choosing the right approach</h4>
-                            <p class="text-gray-400 text-sm leading-relaxed">
-                                Octopilot is purpose-built for organizations that have deliberately chosen repository-local secrets for GitOps, security, or compliance reasons. If your team already uses central vaults successfully, Octopilot may not be necessary. If you're managing GPG keys manually or using Sealed Secrets without governance, Octopilot automates the operational burden while maintaining your existing architecture.
-                            </p>
+                    <div class="flex flex-col">
+                        <div class="flex items-center mb-2">
+                            <i class="fa-solid fa-lightbulb text-yellow-400 text-xl mr-3"></i>
+                            <h4 class="text-white font-bold">Choosing the right approach</h4>
                         </div>
+                        <p class="text-gray-400 text-sm leading-relaxed">
+                            Octopilot is purpose-built for organizations that have deliberately chosen repository-local secrets for GitOps, security, or compliance reasons. If your team already uses central vaults successfully, Octopilot may not be necessary. If you're managing GPG keys manually or using Sealed Secrets without governance, Octopilot automates the operational burden while maintaining your existing architecture.
+                        </p>
                     </div>
                 </div>
             </div>

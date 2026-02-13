@@ -137,7 +137,7 @@ const BlogPost: Component = () => {
                                 </article>
 
                                 {/* Related Posts Sidebar */}
-                                <aside id="related-posts" class="hidden lg:block col-span-3 sticky top-24 h-fit">
+                                <aside id="related-posts" class="col-span-12 lg:col-span-3 lg:sticky lg:top-24 h-fit">
                                     <div class="bg-octo-darker border border-octo-border rounded-xl p-6">
                                         <h3 class="text-white font-bold text-lg mb-4 flex items-center gap-2">
                                             <i class="fa-solid fa-newspaper text-purple-400"></i>

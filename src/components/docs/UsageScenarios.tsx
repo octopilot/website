@@ -11,7 +11,7 @@ const UsageScenarios: Component = () => {
 
                 <h2 class="text-4xl font-bold text-white mb-12">Solo Developer vs Enterprise Teams</h2>
 
-                <div class="grid grid-cols-3 gap-8 mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
                     <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-8">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
@@ -126,7 +126,7 @@ const UsageScenarios: Component = () => {
                     <p class="text-slate-300 leading-relaxed mb-6">
                         As organizations scale from solo developers to multi-team enterprises, secret management complexity explodes. Here's how secret-controller-manager scales with you:
                     </p>
-                    <div class="grid grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
                             <div class="text-blue-400 font-bold mb-3">Solo Developer Problem</div>
                             <p class="text-slate-400 text-sm mb-4">API keys scattered across .env files, wikis, and password managers. No version control, no audit trail.</p>
@@ -151,51 +151,51 @@ const UsageScenarios: Component = () => {
                 <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-8">
                     <h3 class="text-2xl font-bold text-white mb-6">Real-World Scenario Comparison</h3>
                     <div class="overflow-x-auto">
-                        <table class="w-full">
+                        <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="border-b border-slate-700">
-                                    <th class="text-left py-4 px-4 text-white font-semibold">Scenario</th>
-                                    <th class="text-center py-4 px-4 text-blue-400 font-semibold">Solo Developer</th>
-                                    <th class="text-center py-4 px-4 text-purple-400 font-semibold">Small Team</th>
-                                    <th class="text-center py-4 px-4 text-orange-400 font-semibold">Enterprise</th>
+                                    <th class="py-3 px-2 sm:px-4 text-white font-semibold text-xs sm:text-base">Scenario</th>
+                                    <th class="py-3 px-2 sm:px-4 text-center text-blue-400 font-semibold text-xs sm:text-base">Solo Dev</th>
+                                    <th class="py-3 px-2 sm:px-4 text-center text-purple-400 font-semibold text-xs sm:text-base">Small Team</th>
+                                    <th class="py-3 px-2 sm:px-4 text-center text-orange-400 font-semibold text-xs sm:text-base">Enterprise</th>
                                 </tr>
                             </thead>
                             <tbody class="text-slate-300">
                                 <tr class="border-b border-slate-800">
-                                    <td class="py-4 px-4">Number of Repositories</td>
-                                    <td class="text-center py-4 px-4 text-blue-400 font-bold">1-5</td>
-                                    <td class="text-center py-4 px-4 text-purple-400 font-bold">10-50</td>
-                                    <td class="text-center py-4 px-4 text-orange-400 font-bold">500+</td>
+                                    <td class="py-3 px-2 sm:px-4 text-xs sm:text-base font-medium text-slate-400">Repositories</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-blue-400 font-bold text-xs sm:text-base">1-5</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-purple-400 font-bold text-xs sm:text-base">10-50</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-orange-400 font-bold text-xs sm:text-base">500+</td>
                                 </tr>
                                 <tr class="border-b border-slate-800">
-                                    <td class="py-4 px-4">GPG Keys Required</td>
-                                    <td class="text-center py-4 px-4 text-blue-400 font-bold">1 per repo</td>
-                                    <td class="text-center py-4 px-4 text-purple-400 font-bold">1-3 shared</td>
-                                    <td class="text-center py-4 px-4 text-orange-400 font-bold">8+ vertical-specific</td>
+                                    <td class="py-3 px-2 sm:px-4 text-xs sm:text-base font-medium text-slate-400">GPG Keys</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-blue-400 font-bold text-xs sm:text-base">1 per repo</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-purple-400 font-bold text-xs sm:text-base">1-3 shared</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-orange-400 font-bold text-xs sm:text-base">Vertical-specific</td>
                                 </tr>
                                 <tr class="border-b border-slate-800">
-                                    <td class="py-4 px-4">Key Storage</td>
-                                    <td class="text-center py-4 px-4 text-blue-400 font-bold">Local GPG keyring</td>
-                                    <td class="text-center py-4 px-4 text-purple-400 font-bold">AWS/GCP KMS</td>
-                                    <td class="text-center py-4 px-4 text-orange-400 font-bold">Enterprise KMS + HSM</td>
+                                    <td class="py-3 px-2 sm:px-4 text-xs sm:text-base font-medium text-slate-400">Storage</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-blue-400 font-bold text-xs sm:text-base">Local keyring</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-purple-400 font-bold text-xs sm:text-base">Cloud KMS</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-orange-400 font-bold text-xs sm:text-base">KMS + HSM</td>
                                 </tr>
                                 <tr class="border-b border-slate-800">
-                                    <td class="py-4 px-4">Rotation Frequency</td>
-                                    <td class="text-center py-4 px-4 text-blue-400 font-bold">Manual (yearly)</td>
-                                    <td class="text-center py-4 px-4 text-purple-400 font-bold">Quarterly</td>
-                                    <td class="text-center py-4 px-4 text-orange-400 font-bold">90 days (automated)</td>
+                                    <td class="py-3 px-2 sm:px-4 text-xs sm:text-base font-medium text-slate-400">Rotation</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-blue-400 font-bold text-xs sm:text-base">Manual</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-purple-400 font-bold text-xs sm:text-base">Quarterly</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-orange-400 font-bold text-xs sm:text-base">Automated (90d)</td>
                                 </tr>
                                 <tr class="border-b border-slate-800">
-                                    <td class="py-4 px-4">Access Control</td>
-                                    <td class="text-center py-4 px-4 text-blue-400 font-bold">N/A (solo)</td>
-                                    <td class="text-center py-4 px-4 text-purple-400 font-bold">IAM roles</td>
-                                    <td class="text-center py-4 px-4 text-orange-400 font-bold">RBAC + vertical segmentation</td>
+                                    <td class="py-3 px-2 sm:px-4 text-xs sm:text-base font-medium text-slate-400">Access</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-blue-400 font-bold text-xs sm:text-base">None</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-purple-400 font-bold text-xs sm:text-base">IAM Roles</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-orange-400 font-bold text-xs sm:text-base">RBAC / Segmentation</td>
                                 </tr>
                                 <tr>
-                                    <td class="py-4 px-4">Compliance Requirements</td>
-                                    <td class="text-center py-4 px-4 text-blue-400 font-bold">None</td>
-                                    <td class="text-center py-4 px-4 text-purple-400 font-bold">Basic audit logs</td>
-                                    <td class="text-center py-4 px-4 text-orange-400 font-bold">SOC 2, PCI DSS, HIPAA</td>
+                                    <td class="py-3 px-2 sm:px-4 text-xs sm:text-base font-medium text-slate-400">Compliance</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-blue-400 font-bold text-xs sm:text-base">None</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-purple-400 font-bold text-xs sm:text-base">Basic Logs</td>
+                                    <td class="py-3 px-2 sm:px-4 text-center text-orange-400 font-bold text-xs sm:text-base">SOC 2 / PCI / HIPAA</td>
                                 </tr>
                             </tbody>
                         </table>

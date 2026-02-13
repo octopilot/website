@@ -11,7 +11,7 @@ const DocsArchitecture: Component = () => {
 
                 <h2 class="text-4xl font-bold text-white mb-12">How Encryption Is Enforced</h2>
 
-                <div class="grid grid-cols-2 gap-8 mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
                     <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-8">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
@@ -92,7 +92,7 @@ const DocsArchitecture: Component = () => {
                 <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-8 mb-8">
                     <h3 class="text-2xl font-bold text-white mb-6">Data Flow Diagram</h3>
                     <div class="bg-slate-950 border border-slate-700 rounded-lg p-8">
-                        <div class="grid grid-cols-5 gap-4 items-center">
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 items-center">
                             <div class="text-center">
                                 <div class="w-16 h-16 bg-blue-500/20 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <i class="fa-solid fa-user text-blue-400 text-2xl"></i>
@@ -124,7 +124,7 @@ const DocsArchitecture: Component = () => {
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-gradient-to-br from-green-950/30 to-slate-900 border border-green-900/50 rounded-xl p-6">
                         <div class="flex items-center gap-3 mb-4">
                             <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">

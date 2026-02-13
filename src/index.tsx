@@ -15,6 +15,13 @@ import Blog from './pages/resources/Blog';
 import BlogPost from './pages/resources/BlogPost';
 import Docs from './pages/Docs';
 
+import About from './pages/company/About';
+import Privacy from './pages/company/Privacy';
+import Terms from './pages/company/Terms';
+import SecurityPolicy from './pages/company/SecurityPolicy';
+import Compliance from './pages/company/Compliance';
+import BestPractices from './pages/resources/BestPractices';
+
 const root = document.getElementById('root')
 
 render(() => (
@@ -25,9 +32,16 @@ render(() => (
         <Route path="/product/security" component={Security} />
         <Route path="/product/governance" component={Governance} />
         <Route path="/resources/case-studies" component={CaseStudies} />
-        <Route path="/resources/case-studies" component={CaseStudies} />
         <Route path="/blog" component={Blog} />
         <Route path="/blog/:slug" component={BlogPost} />
         <Route path="/docs" component={Docs} />
+
+        {/* Company / Legal Routes */}
+        <Route path="/best-practices" component={BestPractices} />
+        <Route path="/about" component={About} />
+        <Route path="/privacy" component={Privacy} />
+        <Route path="/terms" component={Terms} />
+        <Route path="/security" component={SecurityPolicy} />
+        <Route path="/compliance" component={Compliance} />
     </Router>
 ), root!)

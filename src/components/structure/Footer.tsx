@@ -5,8 +5,8 @@ const Footer: Component = () => {
     return (
         <footer id="footer" class="bg-octo-dark border-t border-octo-border">
             <div class="max-w-[1440px] mx-auto px-8 py-16">
-                <div class="grid grid-cols-5 gap-12 mb-12">
-                    <div class="col-span-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
+                    <div class="col-span-1 md:col-span-2 lg:col-span-2">
                         <A href="/" class="flex items-center space-x-3 mb-6">
                             <div class="w-10 h-10 bg-gradient-to-br from-octo-accent to-blue-600 rounded-lg flex items-center justify-center">
                                 <i class="fa-solid fa-shield-halved text-white text-xl"></i>
@@ -43,29 +43,27 @@ const Footer: Component = () => {
                         <ul class="space-y-3">
                             <li><A href="/docs" class="text-gray-400 hover:text-white transition-colors text-sm">Documentation</A></li>
                             <li><A href="/blog" class="text-gray-400 hover:text-white transition-colors text-sm">Blog</A></li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">API Reference</a></li>
                             <li><a href="https://github.com/octopilot/secret-controller-manager" target="_blank" class="text-gray-400 hover:text-white transition-colors text-sm">Controller (OSS)</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">Integration Guide</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">Best Practices</a></li>
+                            <li><A href="/best-practices" class="text-gray-400 hover:text-white transition-colors text-sm">Best Practices</A></li>
                         </ul>
                     </div>
                     <div>
                         <h4 class="text-white font-bold mb-4 text-sm uppercase tracking-wider">Company</h4>
                         <ul class="space-y-3">
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">About</a></li>
+                            <li><A href="/about" class="text-gray-400 hover:text-white transition-colors text-sm">About</A></li>
                             <li><a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">Contact Sales</a></li>
                             <li><a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">Support</a></li>
                             <li><a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">Status</a></li>
-                            <li><a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">Privacy Policy</a></li>
+                            <li><A href="/privacy" class="text-gray-400 hover:text-white transition-colors text-sm">Privacy Policy</A></li>
                         </ul>
                     </div>
                 </div>
                 <div class="pt-8 border-t border-octo-border flex items-center justify-between">
                     <p class="text-gray-500 text-sm">© 2024 Octopilot. All rights reserved.</p>
                     <div class="flex items-center space-x-6 text-sm text-gray-500">
-                        <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
-                        <a href="#" class="hover:text-white transition-colors">Security</a>
-                        <a href="#" class="hover:text-white transition-colors">Compliance</a>
+                        <A href="/terms" class="hover:text-white transition-colors">Terms of Service</A>
+                        <A href="/security" class="hover:text-white transition-colors">Security</A>
+                        <A href="/compliance" class="hover:text-white transition-colors">Compliance</A>
                     </div>
                 </div>
             </div>

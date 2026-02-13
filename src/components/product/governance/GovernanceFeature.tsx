@@ -16,10 +16,12 @@ const GovernanceFeature: Component<GovernanceFeatureProps> = (props) => {
             <div class="max-w-[1200px] mx-auto px-8">
                 <div class={`flex flex-col md:flex-row items-center gap-16 ${props.reverse ? 'md:flex-row-reverse' : ''}`}>
                     <div class="flex-1">
-                        <div class={`w-16 h-16 ${props.bgColor} rounded-2xl flex items-center justify-center mb-6`}>
-                            <i class={`${props.icon} ${props.iconColor} text-3xl`}></i>
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class={`w-16 h-16 ${props.bgColor} rounded-2xl flex items-center justify-center flex-shrink-0`}>
+                                <i class={`${props.icon} ${props.iconColor} text-3xl`}></i>
+                            </div>
+                            <h2 class="text-3xl font-bold text-white">{props.title}</h2>
                         </div>
-                        <h2 class="text-3xl font-bold text-white mb-6">{props.title}</h2>
                         <p class="text-gray-400 text-lg leading-relaxed mb-8">
                             {props.description}
                         </p>

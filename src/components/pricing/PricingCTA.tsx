@@ -13,13 +13,11 @@ const PricingCTA: Component = () => {
                     <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
                         Start with the Free plan or install Pro from GitHub Marketplace. No credit card required for Free tier.
                     </p>
-                    <div class="flex items-center justify-center space-x-4">
-                        <a href="https://github.com/apps/secret-controller-manager" target="_blank" class="px-8 py-4 bg-octo-accent hover:bg-octo-accent-dark text-white rounded-lg font-bold text-lg transition-colors inline-flex items-center">
-                            <i class="fa-brands fa-github mr-3 text-xl"></i>
+                    <div class="flex flex-col md:flex-row justify-center gap-4">
+                        <a href="https://github.com/apps/octopilot" target="_blank" class="inline-block bg-octo-accent hover:bg-octo-accent-dark text-white font-bold py-3 px-8 rounded-lg transition-colors text-center">
                             Install from GitHub Marketplace
                         </a>
-                        <a href="#" class="px-8 py-4 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-bold text-lg transition-colors inline-flex items-center">
-                            <i class="fa-solid fa-comments mr-3"></i>
+                        <a href="mailto:sales@octopilot.io" class="inline-block bg-white hover:bg-gray-100 text-gray-900 font-bold py-3 px-8 rounded-lg transition-colors text-center">
                             Contact Sales
                         </a>
                     </div>

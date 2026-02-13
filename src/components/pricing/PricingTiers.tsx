@@ -5,7 +5,7 @@ const PricingTiers: Component = () => {
     return (
         <section id="pricing-tiers" class="py-20 bg-octo-darker">
             <div class="max-w-[1400px] mx-auto px-8">
-                <div class="grid grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* Free Tier */}
                     <div id="free-tier" class="bg-octo-dark border-2 border-octo-border rounded-2xl p-7 relative">
                         <div class="mb-7">
@@ -107,7 +107,7 @@ const PricingTiers: Component = () => {
                     </div>
 
                     {/* Pro Tier */}
-                    <div id="pro-tier" class="bg-gradient-to-b from-octo-accent to-blue-600 rounded-2xl p-7 relative transform scale-105 shadow-2xl shadow-octo-accent/20">
+                    <div id="pro-tier" class="bg-gradient-to-b from-octo-accent to-blue-600 rounded-2xl px-7 pb-7 pt-12 relative transform scale-105 shadow-2xl shadow-octo-accent/20">
                         <div class="absolute top-0 right-0 bg-yellow-400 text-octo-darker px-4 py-1 rounded-bl-lg rounded-tr-2xl font-bold text-xs">
                             MOST POPULAR
                         </div>

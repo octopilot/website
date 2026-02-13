@@ -16,12 +16,12 @@ const GovernanceHero: Component = () => {
                 <p class="text-xl text-gray-400 mb-10 max-w-3xl mx-auto leading-relaxed">
                     Define policies once, enforce them everywhere. Prevent secret sprawl, ensure cryptographic strength, and maintain a complete audit trail of every key interaction.
                 </p>
-                <div class="flex items-center justify-center space-x-6">
-                    <a href="/docs" class="px-8 py-4 bg-white hover:bg-gray-100 text-gray-900 rounded-lg font-bold transition-colors inline-flex items-center">
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:space-x-6">
+                    <a href="/docs" class="w-full sm:w-auto px-8 py-4 bg-white hover:bg-gray-100 text-gray-900 rounded-lg font-bold transition-colors inline-flex items-center justify-center">
                         <i class="fa-solid fa-book mr-2"></i>
                         Read the Docs
                     </a>
-                    <a href="https://github.com/octopilot/secret-controller-manager" target="_blank" class="px-8 py-4 bg-octo-gray hover:bg-octo-gray-light text-white rounded-lg font-semibold transition-colors border border-octo-border inline-flex items-center">
+                    <a href="https://github.com/octopilot/secret-controller-manager" target="_blank" class="w-full sm:w-auto px-8 py-4 bg-octo-gray hover:bg-octo-gray-light text-white rounded-lg font-semibold transition-colors border border-octo-border inline-flex items-center justify-center">
                         <i class="fa-brands fa-github mr-2"></i>
                         View on GitHub
                     </a>

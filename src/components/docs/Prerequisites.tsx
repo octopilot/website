@@ -11,7 +11,7 @@ const Prerequisites: Component = () => {
 
                 <h2 class="text-4xl font-bold text-white mb-12">Before You Begin</h2>
 
-                <div class="grid grid-cols-3 gap-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
                         <div class="flex items-center gap-3 mb-4">
                             <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
@@ -95,22 +95,22 @@ const Prerequisites: Component = () => {
                 </div>
 
                 <div class="bg-gradient-to-br from-orange-950/20 to-slate-900/50 border border-orange-900/30 rounded-xl p-8">
-                    <div class="flex items-start gap-4">
+                    <div class="flex items-center gap-4 mb-4">
                         <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                             <i class="fa-solid fa-lightbulb text-orange-400 text-xl"></i>
                         </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-white mb-3">Quick Compatibility Check</h3>
-                            <p class="text-slate-300 mb-4 leading-relaxed">
-                                Run this command to verify your environment meets all prerequisites before installation:
-                            </p>
-                            <div class="bg-slate-950 border border-slate-700 rounded-lg p-4">
-                                <pre class="text-green-400 text-sm whitespace-pre-wrap"><code>curl -sL https://octopilot.app/check.sh | bash</code></pre>
-                            </div>
-                            <p class="text-slate-400 text-sm mt-3">
-                                This script validates Kubernetes version, kubectl access, GitHub permissions, and GPG installation.
-                            </p>
+                        <h3 class="text-xl font-bold text-white">Quick Compatibility Check</h3>
+                    </div>
+                    <div>
+                        <p class="text-slate-300 mb-4 leading-relaxed">
+                            Run this command to verify your environment meets all prerequisites before installation:
+                        </p>
+                        <div class="bg-slate-950 border border-slate-700 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto">
+                            curl -sL https://octopilot.app/check.sh | bash
                         </div>
+                        <p class="text-slate-400 text-sm mt-3">
+                            This script validates Kubernetes version, kubectl access, GitHub permissions, and GPG installation.
+                        </p>
                     </div>
                 </div>
             </div>

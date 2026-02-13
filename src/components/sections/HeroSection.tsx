@@ -3,7 +3,7 @@ import { A } from '@solidjs/router';
 
 const HeroSection: Component = () => {
     return (
-        <section id="hero-section" class="relative h-[850px] overflow-hidden border-b border-octo-border pt-20">
+        <section id="hero-section" class="relative min-h-screen lg:h-[850px] overflow-hidden border-b border-octo-border pt-20">
             <div class="absolute inset-0 bg-gradient-to-b from-octo-dark via-octo-darker to-octo-darker"></div>
             <div class="absolute inset-0 opacity-20">
                 <div class="absolute top-20 left-1/4 w-96 h-px bg-octo-accent transform -rotate-12"></div>
@@ -23,17 +23,17 @@ const HeroSection: Component = () => {
                         <p class="text-xl text-gray-300 leading-relaxed mb-8 max-w-2xl">
                             Automate GPG key signing, rotation, and policy for repository-local encrypted secrets — without introducing a central vault.
                         </p>
-                        <div class="flex items-center space-x-4 mb-8">
-                            <a href="https://github.com/apps/secret-controller-manager" target="_blank" class="px-8 py-4 bg-octo-accent hover:bg-octo-accent-dark text-white rounded-lg font-semibold transition-colors inline-flex items-center">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:space-x-4 mb-8">
+                            <a href="https://github.com/apps/secret-controller-manager" target="_blank" class="w-full sm:w-auto px-8 py-4 bg-octo-accent hover:bg-octo-accent-dark text-white rounded-lg font-semibold transition-colors inline-flex items-center justify-center">
                                 <i class="fa-brands fa-github mr-3 text-lg"></i>
                                 Install from GitHub Marketplace
                             </a>
-                            <A href="/product/architecture" class="px-8 py-4 bg-octo-gray hover:bg-octo-gray-light text-white rounded-lg font-semibold transition-colors inline-flex items-center border border-octo-border">
+                            <A href="/product/architecture" class="w-full sm:w-auto px-8 py-4 bg-octo-gray hover:bg-octo-gray-light text-white rounded-lg font-semibold transition-colors inline-flex items-center justify-center border border-octo-border">
                                 <i class="fa-solid fa-diagram-project mr-3"></i>
                                 View Architecture
                             </A>
                         </div>
-                        <div class="flex items-center space-x-8 text-sm text-gray-400">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:space-x-8 text-sm text-gray-400">
                             <div class="flex items-center space-x-2">
                                 <i class="fa-solid fa-code-branch text-octo-accent"></i>
                                 <span>GitOps-native</span>

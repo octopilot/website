@@ -10,12 +10,14 @@ const FeaturesSection: Component = () => {
                         Precise governance capabilities for repository-local encrypted secrets
                     </p>
                 </div>
-                <div class="grid grid-cols-3 gap-6 mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                     <div class="bg-octo-gray/30 border border-octo-border rounded-xl p-8 hover:border-octo-accent/50 transition-colors">
-                        <div class="w-14 h-14 bg-octo-accent/10 rounded-lg flex items-center justify-center mb-6">
-                            <i class="fa-solid fa-key text-octo-accent text-2xl"></i>
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-octo-accent/10 rounded-lg flex items-center justify-center flex-shrink-0 mr-4">
+                                <i class="fa-solid fa-key text-octo-accent text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Repository-scoped GPG key issuance</h3>
                         </div>
-                        <h3 class="text-xl font-bold text-white mb-3">Repository-scoped GPG key issuance</h3>
                         <p class="text-gray-400 mb-4">
                             Generate unique GPG key pairs for each repository, ensuring cryptographic isolation between applications.
                         </p>
@@ -35,10 +37,12 @@ const FeaturesSection: Component = () => {
                         </ul>
                     </div>
                     <div class="bg-octo-gray/30 border border-octo-border rounded-xl p-8 hover:border-octo-accent/50 transition-colors">
-                        <div class="w-14 h-14 bg-octo-accent/10 rounded-lg flex items-center justify-center mb-6">
-                            <i class="fa-solid fa-certificate text-octo-accent text-2xl"></i>
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-octo-accent/10 rounded-lg flex items-center justify-center flex-shrink-0 mr-4">
+                                <i class="fa-solid fa-certificate text-octo-accent text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Cryptographic signing of repository keys</h3>
                         </div>
-                        <h3 class="text-xl font-bold text-white mb-3">Cryptographic signing of repository keys</h3>
                         <p class="text-gray-400 mb-4">
                             Sign each repository's GPG public key with Octopilot's authority, establishing verifiable trust.
                         </p>
@@ -58,10 +62,12 @@ const FeaturesSection: Component = () => {
                         </ul>
                     </div>
                     <div class="bg-octo-gray/30 border border-octo-border rounded-xl p-8 hover:border-octo-accent/50 transition-colors">
-                        <div class="w-14 h-14 bg-octo-accent/10 rounded-lg flex items-center justify-center mb-6">
-                            <i class="fa-solid fa-rotate text-octo-accent text-2xl"></i>
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-octo-accent/10 rounded-lg flex items-center justify-center flex-shrink-0 mr-4">
+                                <i class="fa-solid fa-rotate text-octo-accent text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Rotation and revocation</h3>
                         </div>
-                        <h3 class="text-xl font-bold text-white mb-3">Rotation and revocation</h3>
                         <p class="text-gray-400 mb-4">
                             Automate key lifecycle management with scheduled rotation and immediate revocation capabilities.
                         </p>
@@ -81,10 +87,12 @@ const FeaturesSection: Component = () => {
                         </ul>
                     </div>
                     <div class="bg-octo-gray/30 border border-octo-border rounded-xl p-8 hover:border-octo-accent/50 transition-colors">
-                        <div class="w-14 h-14 bg-octo-accent/10 rounded-lg flex items-center justify-center mb-6">
-                            <i class="fa-solid fa-shield-halved text-octo-accent text-2xl"></i>
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-octo-accent/10 rounded-lg flex items-center justify-center flex-shrink-0 mr-4">
+                                <i class="fa-solid fa-shield-halved text-octo-accent text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Policy enforcement</h3>
                         </div>
-                        <h3 class="text-xl font-bold text-white mb-3">Policy enforcement</h3>
                         <p class="text-gray-400 mb-4">
                             Define and enforce organizational policies for key usage, encryption standards, and compliance requirements.
                         </p>
@@ -104,10 +112,12 @@ const FeaturesSection: Component = () => {
                         </ul>
                     </div>
                     <div class="bg-octo-gray/30 border border-octo-border rounded-xl p-8 hover:border-octo-accent/50 transition-colors">
-                        <div class="w-14 h-14 bg-octo-accent/10 rounded-lg flex items-center justify-center mb-6">
-                            <i class="fa-solid fa-chart-line text-octo-accent text-2xl"></i>
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-octo-accent/10 rounded-lg flex items-center justify-center flex-shrink-0 mr-4">
+                                <i class="fa-solid fa-chart-line text-octo-accent text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Compliance visibility</h3>
                         </div>
-                        <h3 class="text-xl font-bold text-white mb-3">Compliance visibility</h3>
                         <p class="text-gray-400 mb-4">
                             Track key usage, identify non-compliant repositories, and generate audit reports across your organization.
                         </p>
@@ -127,10 +137,12 @@ const FeaturesSection: Component = () => {
                         </ul>
                     </div>
                     <div class="bg-octo-gray/30 border border-octo-border rounded-xl p-8 hover:border-octo-accent/50 transition-colors">
-                        <div class="w-14 h-14 bg-octo-accent/10 rounded-lg flex items-center justify-center mb-6">
-                            <i class="fa-solid fa-bell text-octo-accent text-2xl"></i>
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-octo-accent/10 rounded-lg flex items-center justify-center flex-shrink-0 mr-4">
+                                <i class="fa-solid fa-bell text-octo-accent text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Alerts and notifications</h3>
                         </div>
-                        <h3 class="text-xl font-bold text-white mb-3">Alerts and notifications</h3>
                         <p class="text-gray-400 mb-4">
                             Receive notifications for key events, policy violations, and approaching rotation deadlines.
                         </p>
@@ -160,7 +172,7 @@ const FeaturesSection: Component = () => {
                             <p class="text-gray-300 leading-relaxed mb-4">
                                 Octopilot integrates seamlessly with existing GitOps workflows. Keys are issued via pull requests, signed keys are committed to repositories, and policy enforcement happens automatically on every commit. No changes to your deployment pipeline required.
                             </p>
-                            <div class="flex items-center space-x-6 text-sm">
+                            <div class="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-6 text-sm">
                                 <div class="flex items-center space-x-2">
                                     <i class="fa-solid fa-code-pull-request text-octo-accent"></i>
                                     <span class="text-gray-400">PR-based key issuance</span>

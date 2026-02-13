@@ -11,7 +11,7 @@ const EncryptionStandards: Component = () => {
 
                 <h2 class="text-4xl font-bold text-white mb-12">Industry-Standard Cryptographic Protocols</h2>
 
-                <div class="grid grid-cols-2 gap-8 mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
                     <div class="bg-octo-dark/50 border border-octo-border rounded-xl p-8">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
@@ -98,7 +98,7 @@ const EncryptionStandards: Component = () => {
                 <div class="bg-octo-dark/50 border border-octo-border rounded-xl p-8">
                     <h3 class="text-2xl font-bold text-white mb-6">Encryption Flow Diagram</h3>
                     <div class="bg-octo-darker border border-slate-700 rounded-lg p-8">
-                        <div class="grid grid-cols-4 gap-6">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                             <div class="text-center">
                                 <div class="w-20 h-20 bg-green-500/20 rounded-lg flex items-center justify-center mx-auto mb-4">
                                     <i class="fa-solid fa-file-lines text-green-400 text-2xl"></i>
@@ -133,7 +133,7 @@ const EncryptionStandards: Component = () => {
                             </div>
                         </div>
                     </div>
-                    <div class="mt-6 grid grid-cols-3 gap-4">
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="bg-octo-darker/50 border border-slate-700 rounded-lg p-4">
                             <div class="flex items-center gap-2 mb-2">
                                 <i class="fa-solid fa-check-circle text-green-400"></i>

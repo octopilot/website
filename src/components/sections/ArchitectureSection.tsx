@@ -11,7 +11,7 @@ const ArchitectureSection: Component = () => {
                     </p>
                 </div>
                 <div class="bg-octo-darker border border-octo-border rounded-xl p-12">
-                    <div class="grid grid-cols-3 gap-8 mb-12">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
                         <div class="bg-octo-gray/50 border border-octo-border rounded-lg p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h4 class="text-lg font-bold text-white">Repository A</h4>
@@ -102,7 +102,7 @@ const ArchitectureSection: Component = () => {
                         </div>
                     </div>
                     <div class="bg-octo-gray/30 border-2 border-octo-accent/30 rounded-lg p-8">
-                        <div class="flex items-center justify-between mb-6">
+                        <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4 md:gap-0">
                             <div class="flex items-center space-x-3">
                                 <i class="fa-solid fa-dharmachakra text-octo-accent text-2xl"></i>
                                 <h4 class="text-xl font-bold text-white">Kubernetes Cluster</h4>
@@ -110,24 +110,35 @@ const ArchitectureSection: Component = () => {
                             <span class="text-sm text-gray-400 font-mono">In-cluster decryption only</span>
                         </div>
                         <div class="bg-octo-dark border border-octo-border rounded-lg p-6">
-                            <div class="flex items-center space-x-3 mb-4">
-                                <i class="fa-solid fa-cube text-blue-400 text-lg"></i>
-                                <code class="text-gray-300 font-mono text-sm">secrets-manager-controller</code>
-                                <span class="ml-auto px-3 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-xs font-medium">Open Source</span>
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fa-solid fa-cube text-blue-400 text-lg"></i>
+                                    <code class="text-gray-300 font-mono text-sm break-all">secrets manager controller</code>
+                                </div>
+                                <span class="px-3 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-xs font-medium whitespace-nowrap">Open Source</span>
                             </div>
                             <p class="text-sm text-gray-400 mb-4">Reconciles encrypted secrets from repositories into Kubernetes Secrets using repository-scoped GPG keys</p>
-                            <div class="flex items-center space-x-2 text-xs text-gray-500">
-                                <i class="fa-solid fa-arrow-right"></i>
-                                <span>Reads signed GPG public key from repo</span>
-                                <i class="fa-solid fa-arrow-right ml-4"></i>
-                                <span>Decrypts secrets in-cluster</span>
-                                <i class="fa-solid fa-arrow-right ml-4"></i>
-                                <span>Creates Kubernetes Secrets</span>
+                            <div class="flex flex-col md:flex-row md:items-center text-xs text-gray-500 gap-y-2 md:gap-y-0">
+                                <div class="flex items-center">
+                                    <i class="fa-solid fa-arrow-down md:hidden mr-2"></i>
+                                    <i class="hidden md:block fa-solid fa-arrow-right mr-2"></i>
+                                    <span>Reads signed GPG public key from repo</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fa-solid fa-arrow-down md:hidden mr-2"></i>
+                                    <i class="hidden md:block fa-solid fa-arrow-right mr-2 md:ml-4"></i>
+                                    <span>Decrypts secrets in-cluster</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fa-solid fa-arrow-down md:hidden mr-2"></i>
+                                    <i class="hidden md:block fa-solid fa-arrow-right mr-2 md:ml-4"></i>
+                                    <span>Creates Kubernetes Secrets</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="mt-12 grid grid-cols-2 gap-8">
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="bg-green-500/5 border border-green-500/20 rounded-lg p-6">
                         <div class="flex items-center space-x-3 mb-4">
                             <i class="fa-solid fa-circle-check text-green-400 text-xl"></i>

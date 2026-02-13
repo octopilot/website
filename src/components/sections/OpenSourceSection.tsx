@@ -10,7 +10,7 @@ const OpenSourceSection: Component = () => {
                         Octopilot is built on a strong open-source foundation with enterprise-grade governance on top.
                     </p>
                 </div>
-                <div class="grid grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="bg-gradient-to-br from-green-500/10 to-emerald-600/10 border-2 border-green-500/30 rounded-xl p-8">
                         <div class="flex items-center justify-between mb-6">
                             <div class="flex items-center space-x-3">
@@ -60,7 +60,7 @@ const OpenSourceSection: Component = () => {
                                 </li>
                             </ul>
                         </div>
-                        <div class="flex items-center space-x-4 text-sm">
+                        <div class="flex flex-wrap gap-4 text-sm">
                             <a href="#" class="flex items-center space-x-2 text-green-400 hover:text-green-300">
                                 <i class="fa-solid fa-book"></i>
                                 <span>Documentation</span>
@@ -124,7 +124,7 @@ const OpenSourceSection: Component = () => {
                                 </li>
                             </ul>
                         </div>
-                        <div class="flex items-center space-x-4 text-sm">
+                        <div class="flex flex-wrap gap-4 text-sm">
                             <a href="#" class="flex items-center space-x-2 text-octo-accent hover:text-blue-400">
                                 <i class="fa-solid fa-rocket"></i>
                                 <span>Start Free Trial</span>
@@ -150,7 +150,7 @@ const OpenSourceSection: Component = () => {
                             <p class="text-gray-300 leading-relaxed mb-6">
                                 The open-source controller handles all secret decryption and Kubernetes integration within your infrastructure. Octopilot provides the governance layer that manages key lifecycle, enforces policies, and ensures compliance across all repositories. You can use the controller independently, but Octopilot automates the operational complexity of managing GPG keys at scale.
                             </p>
-                            <div class="grid grid-cols-3 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div class="bg-octo-dark border border-octo-border rounded-lg p-4">
                                     <div class="flex items-center space-x-2 mb-2">
                                         <i class="fa-solid fa-1 text-octo-accent"></i>

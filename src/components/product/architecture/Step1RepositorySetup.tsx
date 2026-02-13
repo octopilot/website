@@ -17,7 +17,7 @@ const Step1RepositorySetup: Component = () => {
                         </p>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="bg-octo-gray/30 border border-octo-border rounded-xl p-8">
                         <h3 class="text-xl font-bold text-white mb-6 flex items-center">
                             <i class="fa-solid fa-folder-tree text-octo-accent mr-3"></i>
@@ -117,7 +117,7 @@ sops:
                         </div>
                     </div>
                 </div>
-                <div class="mt-8 grid grid-cols-3 gap-6">
+                <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-green-500/5 border border-green-500/20 rounded-lg p-6">
                         <div class="flex items-center space-x-3 mb-3">
                             <i class="fa-solid fa-check-circle text-green-400 text-xl"></i>

@@ -11,7 +11,7 @@ const AuditLogging: Component = () => {
 
                 <h2 class="text-4xl font-bold text-white mb-12">Immutable Audit Trail for Compliance</h2>
 
-                <div class="grid grid-cols-3 gap-8 mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
                     <div class="bg-octo-dark/50 border border-octo-border rounded-xl p-8">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
@@ -121,7 +121,7 @@ const AuditLogging: Component = () => {
                 <div class="bg-octo-dark/50 border border-octo-border rounded-xl p-8 mb-8">
                     <h3 class="text-2xl font-bold text-white mb-6">Sample Audit Log Entry</h3>
                     <div class="bg-octo-darker border border-slate-700 rounded-lg p-6">
-                        <div class="grid grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <div class="text-green-400 font-semibold mb-3 flex items-center gap-2">
                                     <i class="fa-brands fa-git-alt"></i>
@@ -186,7 +186,7 @@ const AuditLogging: Component = () => {
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-gradient-to-br from-green-950/30 to-slate-900 border border-green-900/50 rounded-xl p-6">
                         <div class="flex items-center gap-3 mb-4">
                             <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">

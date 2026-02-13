@@ -13,17 +13,17 @@ const CtaSection: Component = () => {
                     <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
                         Install Octopilot from the GitHub Marketplace and start automating key lifecycle management in minutes.
                     </p>
-                    <div class="flex items-center justify-center space-x-4 mb-8">
-                        <a href="https://github.com/apps/secret-controller-manager" target="_blank" class="px-8 py-4 bg-octo-accent hover:bg-octo-accent-dark text-white rounded-lg font-bold text-lg transition-colors inline-flex items-center">
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:space-x-4 mb-8">
+                        <a href="https://github.com/apps/secret-controller-manager" target="_blank" class="w-full sm:w-auto px-8 py-4 bg-octo-accent hover:bg-octo-accent-dark text-white rounded-lg font-bold text-lg transition-colors inline-flex items-center justify-center">
                             <i class="fa-brands fa-github mr-3 text-xl"></i>
                             Install from GitHub Marketplace
                         </a>
-                        <A href="/docs" class="px-8 py-4 bg-white hover:bg-gray-100 text-gray-900 rounded-lg font-bold text-lg transition-colors inline-flex items-center">
+                        <A href="/docs" class="w-full sm:w-auto px-8 py-4 bg-white hover:bg-gray-100 text-gray-900 rounded-lg font-bold text-lg transition-colors inline-flex items-center justify-center">
                             <i class="fa-solid fa-book mr-3"></i>
                             Read the Documentation
                         </A>
                     </div>
-                    <div class="flex items-center justify-center space-x-8 text-sm text-gray-400">
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:space-x-8 text-sm text-gray-400">
                         <div class="flex items-center space-x-2">
                             <i class="fa-solid fa-check text-green-400"></i>
                             <span>Free for open source</span>

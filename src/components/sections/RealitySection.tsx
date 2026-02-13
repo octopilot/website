@@ -10,12 +10,14 @@ const RealitySection: Component = () => {
                         Understanding why teams keep secrets per repository and why this pattern persists at scale
                     </p>
                 </div>
-                <div class="grid grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="bg-octo-gray/30 border border-octo-border rounded-xl p-8">
-                        <div class="w-14 h-14 bg-octo-accent/10 rounded-lg flex items-center justify-center mb-6">
-                            <i class="fa-solid fa-folder-tree text-octo-accent text-2xl"></i>
+                        <div class="flex items-center mb-6">
+                            <div class="w-14 h-14 bg-octo-accent/10 rounded-lg flex items-center justify-center mr-4">
+                                <i class="fa-solid fa-folder-tree text-octo-accent text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-white">Why teams keep secrets per repository</h3>
                         </div>
-                        <h3 class="text-2xl font-bold text-white mb-4">Why teams keep secrets per repository</h3>
                         <ul class="space-y-4">
                             <li class="flex items-start space-x-3">
                                 <i class="fa-solid fa-check text-octo-accent mt-1"></i>
@@ -55,10 +57,12 @@ const RealitySection: Component = () => {
                         </ul>
                     </div>
                     <div class="bg-octo-gray/30 border border-octo-border rounded-xl p-8">
-                        <div class="w-14 h-14 bg-orange-500/10 rounded-lg flex items-center justify-center mb-6">
-                            <i class="fa-solid fa-database text-orange-400 text-2xl"></i>
+                        <div class="flex items-center mb-6">
+                            <div class="w-14 h-14 bg-orange-500/10 rounded-lg flex items-center justify-center mr-4">
+                                <i class="fa-solid fa-database text-orange-400 text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-white">Why central vaults are often rejected</h3>
                         </div>
-                        <h3 class="text-2xl font-bold text-white mb-4">Why central vaults are often rejected</h3>
                         <ul class="space-y-4">
                             <li class="flex items-start space-x-3">
                                 <i class="fa-solid fa-xmark text-orange-400 mt-1"></i>
@@ -99,14 +103,14 @@ const RealitySection: Component = () => {
                     </div>
                 </div>
                 <div class="mt-12 bg-octo-dark border border-octo-border rounded-xl p-8">
-                    <div class="flex items-start space-x-4">
-                        <i class="fa-solid fa-lightbulb text-yellow-400 text-2xl mt-1"></i>
-                        <div>
-                            <h4 class="text-xl font-bold text-white mb-3">The pattern persists because it works</h4>
-                            <p class="text-gray-300 leading-relaxed">
-                                Repository-local encrypted secrets are not a workaround — they are a deliberate architectural choice that aligns with GitOps principles, organizational ownership models, and security isolation requirements. The challenge is not eliminating this pattern, but governing it at scale.
-                            </p>
+                    <div class="flex flex-col">
+                        <div class="flex items-center mb-3">
+                            <i class="fa-solid fa-lightbulb text-yellow-400 text-2xl mr-4"></i>
+                            <h4 class="text-xl font-bold text-white">The pattern persists because it works</h4>
                         </div>
+                        <p class="text-gray-300 leading-relaxed">
+                            Repository-local encrypted secrets are not a workaround — they are a deliberate architectural choice that aligns with GitOps principles, organizational ownership models, and security isolation requirements. The challenge is not eliminating this pattern, but governing it at scale.
+                        </p>
                     </div>
                 </div>
             </div>
