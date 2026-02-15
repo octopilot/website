@@ -51,7 +51,7 @@ const PricingTiers: Component = () => {
                                 <span class="text-gray-500 text-sm">Audit logs</span>
                             </li>
                         </ul>
-                        <A href="/docs" class="block w-full py-3 bg-octo-gray hover:bg-octo-gray-light text-white rounded-lg font-medium text-center transition-colors text-sm">
+                        <A href="/docs/index" class="block w-full py-3 bg-octo-gray hover:bg-octo-gray-light text-white rounded-lg font-medium text-center transition-colors text-sm">
                             Get Started Free
                         </A>
                     </div>
@@ -203,8 +203,10 @@ const PricingTiers: Component = () => {
                                 <span class="text-gray-300 text-sm">SSO & SAML integration</span>
                             </li>
                         </ul>
-                        <a href="#" class="block w-full py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-medium text-center transition-colors text-sm">
-                            Contact Sales
+                        <a
+                            href="/documentation"
+                            class="block w-full text-center py-3 px-6 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold transition-all border border-slate-700"
+                        >        Contact Sales
                         </a>
                     </div>
                 </div>

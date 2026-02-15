@@ -108,6 +108,23 @@ const RelatedDocs: Component = () => {
                             <i class="fa-solid fa-arrow-right text-xs"></i>
                         </button>
                     </div>
+
+                    <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-emerald-500/50 transition-all cursor-pointer group">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-12 h-12 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-key text-emerald-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-emerald-400 text-xs font-bold uppercase">Guide</div>
+                                <div class="text-white font-semibold">Key Attestation</div>
+                            </div>
+                        </div>
+                        <p class="text-slate-400 text-sm mb-4">Setup secure user enrollment and automated key delivery</p>
+                        <a href="/docs/key-attestation" class="text-emerald-400 hover:text-emerald-300 text-sm font-medium flex items-center gap-2">
+                            Read Guide
+                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </section>

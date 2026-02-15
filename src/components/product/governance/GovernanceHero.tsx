@@ -16,14 +16,12 @@ const GovernanceHero: Component = () => {
                 <p class="text-xl text-gray-400 mb-10 max-w-3xl mx-auto leading-relaxed">
                     Define policies once, enforce them everywhere. Prevent secret sprawl, ensure cryptographic strength, and maintain a complete audit trail of every key interaction.
                 </p>
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:space-x-6">
-                    <a href="/docs" class="w-full sm:w-auto px-8 py-4 bg-white hover:bg-gray-100 text-gray-900 rounded-lg font-bold transition-colors inline-flex items-center justify-center">
-                        <i class="fa-solid fa-book mr-2"></i>
-                        Read the Docs
+                <div class="flex gap-4 justify-center">
+                    <a href="/documentation" class="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg font-bold backdrop-blur-sm transition-all border border-white/10 flex items-center gap-2">
+                        <i class="fa-solid fa-book"></i> Read the Docs
                     </a>
-                    <a href="https://github.com/octopilot/secret-controller-manager" target="_blank" class="w-full sm:w-auto px-8 py-4 bg-octo-gray hover:bg-octo-gray-light text-white rounded-lg font-semibold transition-colors border border-octo-border inline-flex items-center justify-center">
-                        <i class="fa-brands fa-github mr-2"></i>
-                        View on GitHub
+                    <a href="https://github.com/octopilot/secret-controller-manager" target="_blank" class="px-6 py-3 bg-octo-gray hover:bg-octo-gray-light text-white rounded-lg font-semibold transition-colors border border-octo-border inline-flex items-center gap-2">
+                        <i class="fa-brands fa-github"></i> View on GitHub
                     </a>
                 </div>
             </div>

@@ -1,5 +1,4 @@
 import type { Component } from 'solid-js';
-import { A } from '@solidjs/router';
 
 const CtaSection: Component = () => {
     return (
@@ -18,10 +17,9 @@ const CtaSection: Component = () => {
                             <i class="fa-brands fa-github mr-3 text-xl"></i>
                             Install from GitHub Marketplace
                         </a>
-                        <A href="/docs" class="w-full sm:w-auto px-8 py-4 bg-white hover:bg-gray-100 text-gray-900 rounded-lg font-bold text-lg transition-colors inline-flex items-center justify-center">
-                            <i class="fa-solid fa-book mr-3"></i>
-                            Read the Documentation
-                        </A>
+                        <a href="/documentation" class="px-8 py-4 bg-slate-800 text-white rounded-lg font-bold text-lg hover:bg-slate-700 transition-colors flex items-center gap-2 group border border-slate-700">
+                            <i class="fa-solid fa-book text-gray-400 group-hover:text-white transition-colors"></i> Read the Documentation
+                        </a>
                     </div>
                     <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:space-x-8 text-sm text-gray-400">
                         <div class="flex items-center space-x-2">

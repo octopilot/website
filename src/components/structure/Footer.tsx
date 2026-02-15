@@ -41,7 +41,7 @@ const Footer: Component = () => {
                     <div>
                         <h4 class="text-white font-bold mb-4 text-sm uppercase tracking-wider">Resources</h4>
                         <ul class="space-y-3">
-                            <li><A href="/docs" class="text-gray-400 hover:text-white transition-colors text-sm">Documentation</A></li>
+                            <li><a href="/documentation" class="text-gray-400 hover:text-white transition-colors">Documentation</a></li>
                             <li><A href="/blog" class="text-gray-400 hover:text-white transition-colors text-sm">Blog</A></li>
                             <li><a href="https://github.com/octopilot/secret-controller-manager" target="_blank" class="text-gray-400 hover:text-white transition-colors text-sm">Controller (OSS)</a></li>
                             <li><A href="/best-practices" class="text-gray-400 hover:text-white transition-colors text-sm">Best Practices</A></li>

@@ -22,7 +22,7 @@ const PricingCTA: Component = () => {
                         </a>
                     </div>
                     <p class="text-gray-400 text-sm mt-6">
-                        Questions? <A href="/docs" class="text-octo-accent hover:underline">View documentation</A> or <a href="#" class="text-octo-accent hover:underline">talk to our team</a>
+                        Questions? <A href="/documentation" class="text-octo-accent hover:underline">View documentation</A> or <a href="#" class="text-octo-accent hover:underline">talk to our team</a>
                     </p>
                 </div>
             </div>

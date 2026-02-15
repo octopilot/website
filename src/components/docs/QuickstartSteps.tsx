@@ -139,15 +139,17 @@ const QuickstartSteps: Component = () => {
                             </p>
                             <div class="bg-slate-950 border border-slate-700 rounded-lg p-4 mb-4">
                                 <div class="text-slate-500 text-xs mb-2">Create Unencrypted Secret File (secret.yaml)</div>
-                                <pre class="text-green-400 text-sm whitespace-pre-wrap"><code>apiVersion: v1
-                                    kind: Secret
-                                    metadata:
-                                    name: database-credentials
-                                    namespace: production
-                                    type: Opaque
-                                    stringData:
-                                    username: admin
-                                    password: super-secret-password-123</code></pre>
+                                <pre class="text-green-400 text-sm whitespace-pre overflow-x-auto"><code>
+                                    apiVersion: v1{"\n"}
+                                    kind: Secret{"\n"}
+                                    metadata:{"\n"}
+                                    name: database-credentials{"\n"}
+                                    namespace: production{"\n"}
+                                    type: Opaque{"\n"}
+                                    stringData:{"\n"}
+                                    username: admin{"\n"}
+                                    password: super-secret-password-123
+                                </code></pre>
                             </div>
                             <div class="bg-slate-950 border border-slate-700 rounded-lg p-4 mb-4">
                                 <div class="text-slate-500 text-xs mb-2">Encrypt with Repository Key</div>
@@ -218,10 +220,10 @@ const QuickstartSteps: Component = () => {
                             <i class="fa-solid fa-users"></i>
                             Configure Multi-Team Policies
                         </button>
-                        <button class="w-full sm:w-auto px-6 py-3 border border-slate-700 hover:border-slate-600 text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2">
+                        <a href="/documentation" class="w-full sm:w-auto px-6 py-3 border border-slate-700 hover:border-slate-600 text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2">
                             <i class="fa-solid fa-book"></i>
                             Read Full Documentation
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>

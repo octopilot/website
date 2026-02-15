@@ -14,6 +14,10 @@ import CaseStudies from './pages/resources/CaseStudies';
 import Blog from './pages/resources/Blog';
 import BlogPost from './pages/resources/BlogPost';
 import Docs from './pages/Docs';
+import DocsIndex from './pages/docs/DocsIndex';
+import CoreConcepts from './pages/docs/CoreConcepts';
+import KeyAttestation from './pages/docs/KeyAttestation';
+import AdminConfiguration from './pages/docs/AdminConfiguration';
 
 import About from './pages/company/About';
 import Privacy from './pages/company/Privacy';
@@ -35,6 +39,10 @@ render(() => (
         <Route path="/blog" component={Blog} />
         <Route path="/blog/:slug" component={BlogPost} />
         <Route path="/docs" component={Docs} />
+        <Route path="/documentation" component={DocsIndex} />
+        <Route path="/documentation/core-concepts" component={CoreConcepts} />
+        <Route path="/documentation/key-attestation" component={KeyAttestation} />
+        <Route path="/documentation/admin-configuration" component={AdminConfiguration} />
 
         {/* Company / Legal Routes */}
         <Route path="/best-practices" component={BestPractices} />
