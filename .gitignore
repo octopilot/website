@@ -25,3 +25,4 @@ dist-ssr
 
 # Unignore docs components (blocked by global gitignore)
 !src/components/docs/
+!src/pages/docs/
