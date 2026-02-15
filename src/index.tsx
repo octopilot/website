@@ -1,6 +1,6 @@
 /* @refresh reload */
 import { render } from 'solid-js/web'
-import { Router, Route } from '@solidjs/router';
+import { Router, Route, useNavigate } from '@solidjs/router';
 import './index.css'
 import App from './App.tsx'
 
@@ -13,11 +13,13 @@ import Governance from './pages/product/Governance';
 import CaseStudies from './pages/resources/CaseStudies';
 import Blog from './pages/resources/Blog';
 import BlogPost from './pages/resources/BlogPost';
-import Docs from './pages/Docs';
+// import Docs from './pages/Docs';
 import DocsIndex from './pages/docs/DocsIndex';
 import CoreConcepts from './pages/docs/CoreConcepts';
 import KeyAttestation from './pages/docs/KeyAttestation';
 import AdminConfiguration from './pages/docs/AdminConfiguration';
+import GithubActions from './pages/docs/GithubActions';
+import GithubActionDetail from './pages/docs/GithubActionDetail';
 
 import About from './pages/company/About';
 import Privacy from './pages/company/Privacy';
@@ -27,6 +29,18 @@ import Compliance from './pages/company/Compliance';
 import BestPractices from './pages/resources/BestPractices';
 
 const root = document.getElementById('root')
+
+if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
+    throw new Error(
+        'Root element not found. Did you forget to add it to your index.html? Or maybe the id attribute got misspelled?',
+    );
+}
+
+const DocsRedirect = () => {
+    const navigate = useNavigate();
+    navigate('/docs/intro', { replace: true });
+    return null;
+};
 
 render(() => (
     <Router root={App}>
@@ -38,11 +52,17 @@ render(() => (
         <Route path="/resources/case-studies" component={CaseStudies} />
         <Route path="/blog" component={Blog} />
         <Route path="/blog/:slug" component={BlogPost} />
-        <Route path="/docs" component={Docs} />
-        <Route path="/documentation" component={DocsIndex} />
-        <Route path="/documentation/core-concepts" component={CoreConcepts} />
-        <Route path="/documentation/key-attestation" component={KeyAttestation} />
-        <Route path="/documentation/admin-configuration" component={AdminConfiguration} />
+
+        <Route path="/docs" component={DocsRedirect} />
+        <Route path="/docs/intro" component={DocsIndex} />
+        <Route path="/docs/core-concepts" component={CoreConcepts} />
+        <Route path="/docs/key-attestation" component={KeyAttestation} />
+        <Route path="/docs/admin-configuration" component={AdminConfiguration} />
+        <Route path="/docs/github-actions" component={GithubActions} />
+        <Route path="/docs/github-actions/:id" component={GithubActionDetail} />
+
+        {/* Legacy Redirects */}
+        <Route path="/documentation/*" component={DocsRedirect} />
 
         {/* Company / Legal Routes */}
         <Route path="/best-practices" component={BestPractices} />

@@ -212,10 +212,10 @@ const QuickstartSteps: Component = () => {
                         Your repository-local encryption is now live. Secrets are encrypted in Git, decrypted at runtime by the Kubernetes controller, and never shared across repositories. Next steps:
                     </p>
                     <div class="flex flex-col sm:flex-row items-center gap-4">
-                        <button class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2">
+                        <a href="/documentation/github-actions" class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2">
                             <i class="fa-solid fa-code-branch"></i>
                             Set Up CI/CD Integration
-                        </button>
+                        </a>
                         <button class="w-full sm:w-auto px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2">
                             <i class="fa-solid fa-users"></i>
                             Configure Multi-Team Policies
