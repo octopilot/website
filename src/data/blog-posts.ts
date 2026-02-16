@@ -236,10 +236,21 @@ sops:
 <pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
 steps:
   - name: Checkout
-    uses: actions/checkout@v3
+    uses: actions/checkout@v4
     
-  - name: Decrypt Secrets
-    run: op secrets decrypt .env.ci.enc --output .env
+  - name: Setup Tools
+    uses: octopilot/octopilot-actions/setup-tools@v1
+
+  - name: Decrypt secrets
+    id: secrets
+    uses: octopilot/actions/sops-decrypt@main
+    with:
+      file: secrets.enc.yaml
+      age_key: $\{{ secrets.SOPS_AGE_KEY }}
+      output_type: json
+
+  - name: Use secrets
+    run: echo "Secret is \${{ fromJson(steps.secrets.outputs.data).my_secret }}"
     
   - name: Run Integration Tests
     run: npm test
