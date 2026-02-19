@@ -1,4 +1,5 @@
 import type { Component } from 'solid-js';
+import PageMeta from '../../components/seo/PageMeta';
 import DocsCTA from '../../components/docs/DocsCTA';
 import DocsLayout from '../../components/docs/DocsLayout';
 import { githubActions } from '../../data/github-actions';
@@ -14,6 +15,11 @@ const GithubActions: Component = () => {
 
     return (
         <DocsLayout tocItems={tocItems}>
+            <PageMeta
+                title="GitHub Actions Reference"
+                description="Complete reference for all Octopilot GitHub Actions: detect-contexts, lint, test, octopilot build, janitor, release notes, SOPS decrypt, Kubernetes auth, and cloud network access actions."
+                path="/docs/github-actions"
+            />
             <article class="prose prose-invert max-w-none">
                 <div id="intro" class="scroll-mt-24 mb-12">
                     <div class="flex items-center gap-3 mb-6">

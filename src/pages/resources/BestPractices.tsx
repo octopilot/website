@@ -1,9 +1,15 @@
 import type { Component } from 'solid-js';
+import PageMeta from '../../components/seo/PageMeta';
 import CtaSection from '../../components/sections/CtaSection';
 
 const BestPractices: Component = () => {
     return (
         <div class="bg-octo-dark min-h-screen">
+            <PageMeta
+                title="Best Practices"
+                description="Security best practices for GitOps secret management. Eliminate snowflake CI scripts, implement least-privilege access, automate key rotation, and meet compliance requirements with Octopilot."
+                path="/best-practices"
+            />
             <section class="py-20 border-b border-octo-border">
                 <div class="max-w-[1000px] mx-auto px-8">
                     <h1 class="text-4xl md:text-5xl font-bold text-white mb-8">Best Practices</h1>

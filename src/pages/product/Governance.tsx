@@ -1,5 +1,5 @@
 import type { Component } from 'solid-js';
-
+import PageMeta from '../../components/seo/PageMeta';
 import GovernanceHero from '../../components/product/governance/GovernanceHero';
 import GovernanceFeature from '../../components/product/governance/GovernanceFeature';
 import CtaSection from '../../components/sections/CtaSection';
@@ -7,6 +7,11 @@ import CtaSection from '../../components/sections/CtaSection';
 const Governance: Component = () => {
     return (
         <>
+            <PageMeta
+                title="Secrets Governance"
+                description="Enterprise secrets governance with cryptographic isolation per repository, automated key rotation on any schedule, and team-scoped access policies enforced without a central vault."
+                path="/product/governance"
+            />
             <GovernanceHero />
 
             <GovernanceFeature

@@ -1,4 +1,5 @@
 import type { Component } from 'solid-js';
+import PageMeta from '../../components/seo/PageMeta';
 import DocsLayout from '../../components/docs/DocsLayout';
 
 const CoreConcepts: Component = () => {
@@ -12,6 +13,11 @@ const CoreConcepts: Component = () => {
 
     return (
         <DocsLayout tocItems={tocItems}>
+            <PageMeta
+                title="Core Concepts"
+                description="The cryptographic foundations of Octopilot: SOPS, AGE keys, asymmetric encryption, multi-key per-repository isolation, and OpenBAO Transit for enterprise centralized secret access."
+                path="/docs/core-concepts"
+            />
             <div class="mb-12">
                 <div class="flex items-center gap-3 mb-4">
                     <span class="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full text-blue-400 text-xs font-bold uppercase tracking-wider">

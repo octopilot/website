@@ -1,8 +1,14 @@
 import type { Component } from 'solid-js';
+import PageMeta from '../../components/seo/PageMeta';
 
 const SecurityPolicy: Component = () => {
     return (
         <div class="bg-octo-dark min-h-screen py-20">
+            <PageMeta
+                title="Security Policy"
+                description="Octopilot Security Policy: how to report vulnerabilities, our security practices, infrastructure standards, and our commitment to transparent, zero-access architecture."
+                path="/security"
+            />
             <div class="max-w-[1000px] mx-auto px-8">
                 <h1 class="text-4xl font-bold text-white mb-8">Security Policy</h1>
                 <div class="prose prose-invert max-w-none text-gray-400">

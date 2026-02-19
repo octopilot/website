@@ -20,6 +20,7 @@ import KeyAttestation from './pages/docs/KeyAttestation';
 import AdminConfiguration from './pages/docs/AdminConfiguration';
 import GithubActions from './pages/docs/GithubActions';
 import GithubActionDetail from './pages/docs/GithubActionDetail';
+import McpServer from './pages/docs/McpServer';
 
 import About from './pages/company/About';
 import Privacy from './pages/company/Privacy';
@@ -60,6 +61,7 @@ render(() => (
         <Route path="/docs/admin-configuration" component={AdminConfiguration} />
         <Route path="/docs/github-actions" component={GithubActions} />
         <Route path="/docs/github-actions/:id" component={GithubActionDetail} />
+        <Route path="/docs/mcp" component={McpServer} />
 
         {/* Legacy Redirects */}
         <Route path="/documentation/*" component={DocsRedirect} />

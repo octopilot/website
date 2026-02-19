@@ -1,9 +1,15 @@
 import type { Component } from 'solid-js';
+import PageMeta from '../../components/seo/PageMeta';
 import CtaSection from '../../components/sections/CtaSection';
 
 const About: Component = () => {
     return (
         <div class="bg-octo-dark min-h-screen">
+            <PageMeta
+                title="About Octopilot"
+                description="Octopilot is pioneering decentralized secrets management for the GitOps era — security without centralization bottlenecks, built for engineering teams who move fast."
+                path="/about"
+            />
             <section class="py-20 border-b border-octo-border">
                 <div class="max-w-[1000px] mx-auto px-8">
                     <h1 class="text-4xl md:text-5xl font-bold text-white mb-8">About Octopilot</h1>

@@ -1,6 +1,7 @@
 import type { Component } from 'solid-js';
 import { useParams } from '@solidjs/router';
-import { Show } from 'solid-js';
+import { For, Show } from 'solid-js';
+import PageMeta from '../../components/seo/PageMeta';
 import DocsLayout from '../../components/docs/DocsLayout';
 import DocsCTA from '../../components/docs/DocsCTA';
 import { githubActions } from '../../data/github-actions';
@@ -12,7 +13,8 @@ const GithubActionDetail: Component = () => {
     const tocItems = [
         { id: "overview", text: "Overview" },
         { id: "inputs", text: "Inputs" },
-        { id: "usage", text: "Usage" }
+        { id: "usage", text: "Usage" },
+        { id: "gotchas", text: "Known Gotchas" }
     ];
 
     const relatedActions = () => githubActions
@@ -24,6 +26,15 @@ const GithubActionDetail: Component = () => {
 
     return (
         <DocsLayout tocItems={tocItems} relatedLinks={relatedActions()}>
+            <Show when={action()}>
+                {actionData => (
+                    <PageMeta
+                        title={`${actionData().title} — GitHub Action`}
+                        description={actionData().description.slice(0, 160)}
+                        path={`/docs/github-actions/${params.id}`}
+                    />
+                )}
+            </Show>
             <Show when={action()} fallback={
                 <div class="text-white text-center py-20">
                     <h2 class="text-2xl font-bold mb-4">Action Not Found</h2>
@@ -142,6 +153,62 @@ const GithubActionDetail: Component = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Gotchas */}
+                        <Show when={actionData().gotchas && actionData().gotchas!.length > 0}>
+                            <div id="gotchas" class="scroll-mt-24 mb-16">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h2 class="text-2xl font-bold text-white">Known Gotchas</h2>
+                                </div>
+                                <p class="text-slate-400 text-sm mb-6">
+                                    Discovered while dogfooding this action. The full list is maintained in{' '}
+                                    <a
+                                        href={`https://github.com/octopilot/actions/blob/main/${actionData().id}/action.yml`}
+                                        target="_blank"
+                                        class="text-blue-400 hover:text-blue-300 hover:underline"
+                                    >
+                                        action.yml
+                                    </a>.
+                                </p>
+                                <div class="space-y-3">
+                                    <For each={actionData().gotchas}>
+                                        {gotcha => (
+                                            <details class="group bg-amber-500/5 border border-amber-500/20 rounded-xl overflow-hidden">
+                                                {/* Summary row — click to expand */}
+                                                <summary class="flex items-center gap-3 px-6 py-4 cursor-pointer list-none select-none hover:bg-amber-500/10 transition-colors">
+                                                    <i class="fa-solid fa-triangle-exclamation text-amber-400 flex-shrink-0"></i>
+                                                    <Show when={gotcha.language}>
+                                                        <span class="px-2 py-0.5 bg-amber-500/20 text-amber-300 text-xs font-bold rounded font-mono flex-shrink-0">
+                                                            {gotcha.language}
+                                                        </span>
+                                                    </Show>
+                                                    <span class="text-white font-semibold flex-1">{gotcha.title}</span>
+                                                    {/* Chevron rotates when open */}
+                                                    <i class="fa-solid fa-chevron-right text-amber-500/60 text-xs flex-shrink-0 transition-transform duration-200 group-open:rotate-90"></i>
+                                                </summary>
+
+                                                {/* Expanded body */}
+                                                <div class="px-6 py-5 space-y-4 border-t border-amber-500/20">
+                                                    <div>
+                                                        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Symptom</p>
+                                                        <p class="text-slate-300 text-sm leading-relaxed">{gotcha.symptom}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Fix</p>
+                                                        <p class="text-slate-300 text-sm leading-relaxed">{gotcha.fix}</p>
+                                                    </div>
+                                                    <Show when={gotcha.code}>
+                                                        <div class="bg-slate-900/80 border border-slate-700 rounded-lg p-4 overflow-x-auto">
+                                                            <pre class="font-mono text-sm text-green-300 leading-relaxed whitespace-pre">{gotcha.code}</pre>
+                                                        </div>
+                                                    </Show>
+                                                </div>
+                                            </details>
+                                        )}
+                                    </For>
+                                </div>
+                            </div>
+                        </Show>
 
                     </article>
                 )}

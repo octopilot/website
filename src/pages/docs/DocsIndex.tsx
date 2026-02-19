@@ -1,4 +1,5 @@
 import type { Component } from 'solid-js';
+import PageMeta from '../../components/seo/PageMeta';
 import DocsLayout from '../../components/docs/DocsLayout';
 
 const DocsIndex: Component = () => {
@@ -11,6 +12,11 @@ const DocsIndex: Component = () => {
 
     return (
         <DocsLayout tocItems={tocItems}>
+            <PageMeta
+                title="Documentation"
+                description="Comprehensive guides, references, and tutorials for Octopilot — GitOps secrets management, key attestation, CI/CD pipeline automation, and GitHub Actions reference."
+                path="/docs/intro"
+            />
             <div class="mb-12">
                 <h1 class="text-4xl font-bold text-white mb-4">Documentation</h1>
                 <p class="text-xl text-slate-400">

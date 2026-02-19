@@ -1,4 +1,5 @@
 import type { Component } from 'solid-js';
+import PageMeta from '../../components/seo/PageMeta';
 import DocsCTA from '../../components/docs/DocsCTA';
 import DocsLayout from '../../components/docs/DocsLayout';
 
@@ -12,6 +13,11 @@ const AdminConfiguration: Component = () => {
 
     return (
         <DocsLayout tocItems={tocItems}>
+            <PageMeta
+                title="Admin Configuration"
+                description="Configure your Octopilot organisation: attestation rules, approved email domains, key rotation schedules, and environment variables for the GitHub App."
+                path="/docs/admin-configuration"
+            />
             <article class="prose prose-invert max-w-none">
                 <div id="intro" class="scroll-mt-24 mb-12">
                     <div class="flex items-center gap-3 mb-6">

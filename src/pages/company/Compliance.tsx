@@ -1,8 +1,14 @@
 import type { Component } from 'solid-js';
+import PageMeta from '../../components/seo/PageMeta';
 
 const Compliance: Component = () => {
     return (
         <div class="bg-octo-dark min-h-screen py-20">
+            <PageMeta
+                title="Compliance & Billing"
+                description="Octopilot compliance information, invoicing via Lemon Squeezy as Merchant of Record, VAT/GST handling, and GDPR data residency details."
+                path="/compliance"
+            />
             <div class="max-w-[1000px] mx-auto px-8">
                 <h1 class="text-4xl font-bold text-white mb-8">Compliance & Billing</h1>
 

@@ -45,6 +45,11 @@ const DocsSidebar: Component = () => {
                                 GitHub Actions
                             </A>
                         </li>
+                        <li>
+                            <A href="/docs/mcp" class="block px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors text-sm" activeClass="bg-purple-500/10 text-purple-400 font-medium">
+                                MCP Server
+                            </A>
+                        </li>
                     </ul>
                 </div>
             </nav>

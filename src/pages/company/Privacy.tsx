@@ -1,8 +1,14 @@
 import type { Component } from 'solid-js';
+import PageMeta from '../../components/seo/PageMeta';
 
 const Privacy: Component = () => {
     return (
         <div class="bg-octo-dark min-h-screen py-20">
+            <PageMeta
+                title="Privacy Policy"
+                description="Octopilot Privacy Policy. We collect minimal data, process payments securely through Lemon Squeezy, and never hold your secrets or encryption keys."
+                path="/privacy"
+            />
             <div class="max-w-[1000px] mx-auto px-8">
                 <h1 class="text-4xl font-bold text-white mb-8">Privacy Policy</h1>
                 <div class="prose prose-invert max-w-none text-gray-400">

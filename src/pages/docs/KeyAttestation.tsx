@@ -1,4 +1,5 @@
 import type { Component } from 'solid-js';
+import PageMeta from '../../components/seo/PageMeta';
 import KeyAttestationHero from '../../components/docs/key-attestation/KeyAttestationHero';
 import AttestationFlow from '../../components/docs/key-attestation/AttestationFlow';
 import EnrollmentSteps from '../../components/docs/key-attestation/EnrollmentSteps';
@@ -16,6 +17,11 @@ const KeyAttestation: Component = () => {
 
     return (
         <DocsLayout tocItems={tocItems}>
+            <PageMeta
+                title="Key Attestation"
+                description="How Octopilot verifies GPG key ownership and builds cryptographic trust chains for repository secrets. Step-by-step enrollment guide for developers and administrators."
+                path="/docs/key-attestation"
+            />
             <div id="hero" class="scroll-mt-24">
                 <KeyAttestationHero />
             </div>

@@ -1,6 +1,7 @@
 import type { Component } from 'solid-js';
 import { useParams, A } from '@solidjs/router';
 import { Show } from 'solid-js';
+import PageMeta from '../../components/seo/PageMeta';
 import { blogPosts } from '../../data/blog-posts';
 import CtaSection from '../../components/sections/CtaSection';
 
@@ -20,6 +21,12 @@ const BlogPost: Component = () => {
         }>
             {(p) => (
                 <article class="bg-octo-dark">
+                    <PageMeta
+                        title={p().title}
+                        description={p().excerpt.slice(0, 160)}
+                        path={`/blog/${p().slug}`}
+                        type="article"
+                    />
                     {/* Hero Section */}
                     <section id="article-hero" class="h-[650px] relative overflow-hidden border-b border-octo-border pt-20">
                         <div class="absolute inset-0 bg-gradient-to-b from-indigo-900/30 to-transparent"></div>

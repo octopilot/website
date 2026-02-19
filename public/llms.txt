@@ -1,0 +1,74 @@
+# Octopilot
+
+> Octopilot is a GitOps CI/CD platform that provides a "path to production" for
+> applications built with Cloud Native Buildpacks and Skaffold. It offers a suite
+> of GitHub Actions that automate the full build → push → promote → deploy
+> lifecycle, with first-class multi-architecture support (linux/amd64 + linux/arm64),
+> SBOM generation, and SLSA provenance attestation.
+
+The core tool is `op` (octopilot-pipeline-tools), a Go CLI that integrates directly
+with the Skaffold and Pack Go libraries to build artifacts without subprocesses,
+assemble OCI manifest lists, and produce `build_result.json` as a contract between
+pipeline stages.
+
+## Documentation
+
+- [Getting Started](https://octopilot.app/docs/intro): Introduction and setup guide
+- [Core Concepts](https://octopilot.app/docs/core-concepts): Architecture and key concepts
+- [GitHub Actions Reference](https://octopilot.app/docs/github-actions): All available actions
+
+## GitHub Actions
+
+All actions live at `github.com/octopilot/actions` and are used via
+`uses: octopilot/actions/<name>@main`.
+
+### Pipeline actions (use these together)
+
+- [detect-contexts](https://octopilot.app/docs/github-actions/detect-contexts): Parses `skaffold.yaml` to auto-detect languages, versions, and build matrix. Outputs a `pipeline-context` JSON object consumed by all downstream actions.
+- [lint](https://octopilot.app/docs/github-actions/lint): Runs pre-commit linting with language-aware toolchain setup. Accepts `pipeline-context`. Uses `golangci/golangci-lint-action` for Go (respects `.golangci.yml`). Inputs: `pipeline-context` (required), `golangci-lint-timeout` (default `10m`).
+- [test](https://octopilot.app/docs/github-actions/test): Runs tests for a single matrix item. Accepts one entry from `pipeline-context.matrix`. Supports Go, Rust, Python, Node. Matrix fan-out declared in calling workflow.
+- [octopilot](https://octopilot.app/docs/github-actions/octopilot): Builds and pushes multi-arch container images using the `op` CLI. Reads `skaffold.yaml`. Outputs `digest` (sha256 of the application image). Inputs: `registry` (required), `version`, `platforms` (default `linux/amd64`), `build_bypass`, `op_binary`.
+- [janitor](https://octopilot.app/docs/github-actions/janitor): Frees ~15 GB of unused runner disk space before large Docker builds. Context-aware: preserves toolcaches for detected languages. Input: `pipeline-context` (optional — omit for Docker-only jobs to remove everything).
+
+### Utility actions
+
+- [release](https://octopilot.app/docs/github-actions/release): AI-powered release notes generator from commit history. Supports Anthropic and OpenAI. Output: `body_file` (path to Markdown file).
+- [sops-decrypt](https://octopilot.app/docs/github-actions/sops-decrypt): Decrypts SOPS-encrypted files (YAML, JSON, dotenv) using GPG or AGE keys.
+- [setup-tools](https://octopilot.app/docs/github-actions/setup-tools): Installs kubectl, sops, kustomize, yq with version pinning.
+- [rotate-secret](https://octopilot.app/docs/github-actions/rotate-secret): Rotates GitHub Actions repository secrets using LibSodium encryption.
+- [kubernetes-auth](https://octopilot.app/docs/github-actions/kubernetes-auth): Authenticates with Kubernetes via OIDC (ROPC flow) and writes KUBECONFIG.
+- [gke-allow-runner](https://octopilot.app/docs/github-actions/gke-allow-runner): Whitelists GitHub runner IPs in GKE control plane authorized networks.
+- [eks-allow-runner](https://octopilot.app/docs/github-actions/eks-allow-runner): Whitelists GitHub runner IPs in AWS EKS public access CIDRs.
+- [aks-allow-runner](https://octopilot.app/docs/github-actions/aks-allow-runner): Whitelists GitHub runner IPs in Azure AKS API server authorized ranges.
+
+## Typical CI workflow pattern
+
+```yaml
+detect → lint + test (parallel) → integration → build-container → publish-release
+```
+
+The `pipeline-context` JSON from `detect-contexts` flows through all jobs:
+```json
+{
+  "matrix": [{"name": "my-app", "context": ".", "language": "go", "version": "1.25.6"}],
+  "languages": ["go"],
+  "versions": {"go": "1.25.6"}
+}
+```
+
+## Machine-readable data
+
+- [Full documentation (llms-full.txt)](https://octopilot.app/llms-full.txt): Complete action reference with all inputs, outputs, examples, and gotchas
+- [Actions registry (actions.json)](https://octopilot.app/actions.json): Structured JSON of all actions
+
+## AI Agent Integration (MCP)
+
+Octopilot provides a [Model Context Protocol server](https://octopilot.app/docs/mcp) (`octopilot-mcp`)
+that enables AI agents to detect languages, generate CI workflows, onboard repositories, and
+run `op build` directly. See [/docs/mcp](https://octopilot.app/docs/mcp) for setup.
+
+## Source repositories
+
+- [octopilot/actions](https://github.com/octopilot/actions): All GitHub Action source code
+- [octopilot/octopilot-pipeline-tools](https://github.com/octopilot/octopilot-pipeline-tools): The `op` CLI (Go)
+- [octopilot/octopilot-workflows](https://github.com/octopilot/octopilot-workflows): Reusable workflow wrappers

@@ -1,10 +1,16 @@
 import type { Component } from 'solid-js';
+import PageMeta from '../../components/seo/PageMeta';
 import BlogList from '../../components/resources/BlogList';
 import CtaSection from '../../components/sections/CtaSection';
 
 const Blog: Component = () => {
     return (
         <div class="bg-octo-dark">
+            <PageMeta
+                title="Blog — Secret Management Insights"
+                description="Technical insights on GitOps secret management at every scale. From .env file anti-patterns to rotating compromised secrets across 500+ services."
+                path="/blog"
+            />
             <section id="hero-blogs" class="h-[650px] relative overflow-hidden border-b border-octo-border pt-20">
                 <div class="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-transparent"></div>
                 <div class="absolute inset-0" style="background-image: radial-gradient(circle at 50% 50%, rgba(45, 91, 255, 0.1) 0%, transparent 50%);"></div>

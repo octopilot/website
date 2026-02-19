@@ -10,6 +10,14 @@ export interface ActionOutput {
   description: string;
 }
 
+export interface ActionGotcha {
+  language?: string; // e.g. "Go", "Rust" — shown as a badge
+  title: string;
+  symptom: string;   // what you see when it fails
+  fix: string;       // prose explanation of the fix
+  code?: string;     // optional shell / yaml snippet
+}
+
 export interface GithubAction {
   id: string;
   title: string;
@@ -20,12 +28,212 @@ export interface GithubAction {
   inputs: ActionInput[];
   outputs?: ActionOutput[];
   example: string;
+  gotchas?: ActionGotcha[];
   icon: string;
   iconColor: string;
   iconBg: string; // Tailwind class
 }
 
 export const githubActions: GithubAction[] = [
+  {
+    id: "octopilot",
+    title: "Octopilot Build",
+    path: "octopilot/actions/octopilot@main",
+    version: "v1",
+    description: "Builds and pushes multi-architecture container images using Octopilot Pipeline Tools. Reads skaffold.yaml, builds all artifacts with Cloud Native Buildpacks or Dockerfile builders, assembles OCI manifest lists, and outputs the image digest for downstream attestation and promotion steps.",
+    features: [
+      "Multi-arch manifest list (amd64 + arm64)",
+      "Direct Pack library integration",
+      "SBOM generation",
+      "Build bypass for bootstrapping"
+    ],
+    inputs: [
+      { name: "registry", description: "Target registry and org (e.g. ghcr.io/octopilot)", required: true },
+      { name: "version", description: "Version tag applied to pushed images (defaults to GITHUB_REF_NAME)", required: false },
+      { name: "platforms", description: "Comma-separated platform list (e.g. linux/amd64,linux/arm64)", required: false, default: "linux/amd64" },
+      { name: "op_version", description: "Version of the ghcr.io/octopilot/op builder image to use", required: false, default: "latest" },
+      { name: "sbom_output", description: "Directory for SBOM output; packaged as sbom_output.tar.gz when non-empty", required: false, default: "dist/sbom" },
+      { name: "op_binary", description: "Path to a pre-built op binary (only used when build_bypass is true)", required: false, default: "op" },
+      { name: "build_bypass", description: "Run op directly instead of inside a container — used for bootstrapping", required: false, default: "false" }
+    ],
+    outputs: [
+      { name: "digest", description: "sha256 digest of the application image — ready for actions/attest-build-provenance" }
+    ],
+    example: `name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: \${{ github.actor }}
+          password: \${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push
+        id: push
+        uses: octopilot/actions/octopilot@main
+        with:
+          version: \${{ github.ref_name }}
+          registry: ghcr.io/\${{ github.repository_owner }}
+          platforms: linux/amd64,linux/arm64
+
+      - name: Attest Build Provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/\${{ github.repository_owner }}/my-app
+          subject-digest: \${{ steps.push.outputs.digest }}
+          push-to-registry: true`,
+    icon: "fa-rocket",
+    iconColor: "text-blue-400",
+    iconBg: "bg-blue-500/10"
+  },
+  {
+    id: "lint",
+    title: "Lint",
+    path: "octopilot/actions/lint@main",
+    version: "v1",
+    description: "Runs pre-commit linting across the workspace. Language toolchains (Go, Rust, Node, Python, Java) are set up automatically based on the languages detected in the pipeline-context from detect-contexts, so language-specific hooks such as rustfmt and golangci-lint work without any extra configuration.",
+    features: [
+      "Language-aware toolchain setup",
+      "pre-commit hook runner",
+      "Environment caching",
+      "Zero config — reads pipeline-context"
+    ],
+    inputs: [
+      {
+        name: "pipeline-context",
+        description: "Consolidated CI context JSON produced by detect-contexts. Determines which toolchains to install before running pre-commit.",
+        required: true
+      },
+      {
+        name: "golangci-lint-timeout",
+        description: "Timeout passed to golangci-lint via --timeout. Increase for projects with large vendor trees. golangci-lint-action@v6 overrides .golangci.yml run.timeout, so this must be set explicitly.",
+        required: false,
+        default: "10m"
+      }
+    ],
+    example: `name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      pipeline-context: \${{ steps.detect.outputs.pipeline-context }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: detect
+        uses: octopilot/actions/detect-contexts@main
+
+  lint:
+    needs: detect
+    if: toJSON(fromJson(needs.detect.outputs.pipeline-context).languages) != '[]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: octopilot/actions/lint@main
+        with:
+          pipeline-context: \${{ needs.detect.outputs.pipeline-context }}
+          # Optional: increase for large vendor trees (default: 10m)
+          # golangci-lint-timeout: 15m`,
+    gotchas: [
+      {
+        language: "Go",
+        title: "golangci-lint timeout — use .golangci.yml",
+        symptom: "golangci-lint exits with code 4: context deadline exceeded / Timeout exceeded. The pre-commit golangci-lint hook does not reliably read .golangci.yml, so the timeout directive is silently ignored on large vendor trees.",
+        fix: "This action runs golangci-lint via golangci/golangci-lint-action@v6 and passes --timeout=10m explicitly via its args input. golangci-lint-action@v6 passes --timeout internally and overrides the run.timeout value in .golangci.yml, so the config file alone is not sufficient — the explicit arg is required. The pre-commit golangci-lint hook is automatically skipped to avoid double-running.",
+        code: `# In the action: args: --timeout=10m is passed explicitly.
+# .golangci.yml is still useful for local 'pre-commit run' and direct
+# 'golangci-lint run' invocations:
+run:
+  timeout: 10m`
+      },
+      {
+        language: "Go",
+        title: "golangci-lint pre-built binary compiled with older Go than project requires",
+        symptom: "golangci-lint exits with: the Go language version (goX.Y) used to build golangci-lint is lower than the targeted Go version (X.Y.Z). In CI this happens when golangci-lint-action downloads a pre-built binary release that was compiled with an older Go.",
+        fix: "This action uses install-mode: goinstall, which compiles golangci-lint from source using the Go toolchain already set up by actions/setup-go. The compiled binary inherits the project's Go version, so the mismatch cannot occur. Locally, use GOTOOLCHAIN when installing.",
+        code: `# Install locally (run once after cloning or upgrading Go)
+GOTOOLCHAIN="go$(grep '^go ' go.mod | awk '{print $2}')" \\
+  go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest`
+      }
+    ],
+    icon: "fa-magnifying-glass",
+    iconColor: "text-yellow-400",
+    iconBg: "bg-yellow-500/10"
+  },
+  {
+    id: "test",
+    title: "Test",
+    path: "octopilot/actions/test@main",
+    version: "v1",
+    description: "Runs tests for a single language context item from the pipeline-context matrix. Supports Go, Rust, Python, and Node. The matrix fan-out is declared in the calling workflow; this action handles per-item toolchain setup and test execution, with an optional custom command override.",
+    features: [
+      "Go, Rust, Python, Node support",
+      "Custom command override",
+      "Matrix-native — one item per call",
+      "Working directory from context"
+    ],
+    inputs: [
+      {
+        name: "pipeline-context",
+        description: "A single matrix item JSON from detect-contexts pipeline-context.matrix. Pass with: pipeline-context: ${{ toJson(matrix) }}",
+        required: true
+      }
+    ],
+    example: `name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      pipeline-context: \${{ steps.detect.outputs.pipeline-context }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: detect
+        uses: octopilot/actions/detect-contexts@main
+
+  test:
+    needs: detect
+    if: toJSON(fromJson(needs.detect.outputs.pipeline-context).matrix) != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include: \${{ fromJson(needs.detect.outputs.pipeline-context).matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: octopilot/actions/test@main
+        with:
+          pipeline-context: \${{ toJson(matrix) }}`,
+    icon: "fa-flask",
+    iconColor: "text-green-400",
+    iconBg: "bg-green-500/10"
+  },
   {
     id: "release",
     title: "Release Notes Generator",
@@ -115,6 +323,72 @@ jobs:
     icon: "fa-lock",
     iconColor: "text-purple-400",
     iconBg: "bg-purple-500/10"
+  },
+  {
+    id: "janitor",
+    title: "Janitor",
+    path: "octopilot/actions/janitor@main",
+    version: "v1",
+    description: "Frees ~15 GB of pre-installed but unused toolchains from GitHub-hosted ubuntu-latest runners. When pipeline-context (from detect-contexts) is provided, toolcaches for detected languages are automatically preserved so subsequent setup steps in the same job still work. Omit pipeline-context for Docker-only jobs to remove all toolcaches. Logs disk usage before and after.",
+    features: [
+      "~15 GB freed on ubuntu-latest",
+      "Context-aware — keeps detected language toolcaches",
+      "Before/after disk usage report",
+      "Safe — skips missing paths silently"
+    ],
+    inputs: [
+      {
+        name: "pipeline-context",
+        description: "Optional consolidated CI context JSON from detect-contexts. Toolcaches for detected languages are automatically preserved. Omit for Docker-only jobs to remove all toolcaches.",
+        required: false,
+        default: ""
+      }
+    ],
+    example: `name: CI
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      pipeline-context: \${{ steps.detect.outputs.pipeline-context }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: detect
+        uses: octopilot/actions/detect-contexts@main
+
+  # Docker-only job: no pipeline-context → all toolcaches removed
+  build:
+    needs: detect
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: octopilot/actions/janitor@main
+      - uses: docker/setup-qemu-action@v3
+      - name: Build and Push
+        uses: octopilot/actions/octopilot@main
+        with:
+          registry: ghcr.io/\${{ github.repository_owner }}
+          platforms: linux/amd64,linux/arm64
+
+  # Job that also runs tests: pass pipeline-context so Go toolcache is kept
+  test:
+    needs: detect
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: octopilot/actions/janitor@main
+        with:
+          pipeline-context: \${{ needs.detect.outputs.pipeline-context }}
+      - uses: octopilot/actions/test@main
+        with:
+          pipeline-context: \${{ needs.detect.outputs.pipeline-context }}`,
+    icon: "fa-broom",
+    iconColor: "text-orange-400",
+    iconBg: "bg-orange-500/10"
   },
   {
     id: "setup-tools",

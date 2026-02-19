@@ -1,8 +1,14 @@
 import type { Component } from 'solid-js';
+import PageMeta from '../../components/seo/PageMeta';
 
 const Terms: Component = () => {
     return (
         <div class="bg-octo-dark min-h-screen py-20">
+            <PageMeta
+                title="Terms of Service"
+                description="Octopilot Terms of Service. Read the terms governing your use of the Octopilot platform, GitHub App, and subscription services."
+                path="/terms"
+            />
             <div class="max-w-[1000px] mx-auto px-8">
                 <h1 class="text-4xl font-bold text-white mb-8">Terms of Service</h1>
                 <div class="prose prose-invert max-w-none text-gray-400">

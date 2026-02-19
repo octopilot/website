@@ -1,0 +1,28 @@
+User-agent: *
+Allow: /
+
+# Static AI-readable content
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /actions.json
+
+# Explicitly allow known AI crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Googlebot-Extended
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+Sitemap: https://octopilot.app/sitemap.xml
