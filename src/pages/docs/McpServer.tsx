@@ -39,15 +39,34 @@ const McpServer: Component = () => {
                         generate CI pipelines, and run builds — all without leaving their editor.
                     </p>
 
-                    <div class="mt-8 p-6 bg-purple-500/5 border border-purple-500/20 rounded-xl">
-                        <h3 class="text-white font-bold mb-3 flex items-center gap-2">
-                            <i class="fa-solid fa-rocket text-purple-400"></i>
-                            Quick start
-                        </h3>
-                        <div class="bg-slate-900/80 rounded-lg p-4 font-mono text-sm text-green-300">
-                            <div class="text-slate-500 mb-1"># Register with Cursor in one command</div>
-                            <div>uv run fastmcp install cursor src/octopilot_mcp/server.py \</div>
-                            <div class="pl-4">--name octopilot --env OP_BINARY=/usr/local/bin/op</div>
+                    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-5 bg-purple-500/5 border border-purple-500/20 rounded-xl">
+                            <h3 class="text-white font-bold mb-3 flex items-center gap-2 text-sm">
+                                <i class="fa-solid fa-globe text-purple-400"></i>
+                                Hosted — zero install
+                            </h3>
+                            <div class="bg-slate-900/80 rounded-lg p-3 font-mono text-xs text-green-300 space-y-1">
+                                <div class="text-slate-500"># Cursor</div>
+                                <div>fastmcp install cursor \</div>
+                                <div class="pl-4">https://mcp.octopilot.app</div>
+                                <div class="text-slate-500 mt-2"># Claude Desktop</div>
+                                <div>fastmcp install claude \</div>
+                                <div class="pl-4">https://mcp.octopilot.app</div>
+                            </div>
+                            <p class="text-slate-500 text-xs mt-2">Stateless tools only. No Docker needed.</p>
+                        </div>
+                        <div class="p-5 bg-slate-800/30 border border-slate-700/50 rounded-xl">
+                            <h3 class="text-white font-bold mb-3 flex items-center gap-2 text-sm">
+                                <i class="fa-solid fa-laptop text-slate-400"></i>
+                                Local — full suite
+                            </h3>
+                            <div class="bg-slate-900/80 rounded-lg p-3 font-mono text-xs text-green-300 space-y-1">
+                                <div class="text-slate-500"># Requires Docker</div>
+                                <div>pip install octopilot-mcp</div>
+                                <div>fastmcp install cursor \</div>
+                                <div class="pl-4">src/octopilot_mcp/server.py</div>
+                            </div>
+                            <p class="text-slate-500 text-xs mt-2">Includes detect, onboard, and run_op_build.</p>
                         </div>
                     </div>
                 </div>
@@ -123,40 +142,34 @@ const McpServer: Component = () => {
                     <h2 class="text-3xl font-bold text-white mb-6">Setup</h2>
 
                     <div class="space-y-6">
-                        <div class="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
-                            <div class="px-6 py-4 bg-slate-900 border-b border-slate-800">
-                                <span class="text-sm font-bold text-slate-300">1. Install</span>
-                            </div>
-                            <div class="p-6 font-mono text-sm text-green-300 space-y-1">
-                                <div><span class="text-slate-500"># Clone the repo</span></div>
-                                <div>git clone https://github.com/octopilot/octopilot-mcp</div>
-                                <div>cd octopilot-mcp && uv sync</div>
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
-                            <div class="px-6 py-4 bg-slate-900 border-b border-slate-800">
-                                <span class="text-sm font-bold text-slate-300">2. Register with your IDE (FastMCP 3 CLI)</span>
+                        {/* Option A — Hosted */}
+                        <div class="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
+                            <div class="px-6 py-4 bg-purple-500/5 border-b border-purple-500/20 flex items-center gap-3">
+                                <i class="fa-solid fa-globe text-purple-400"></i>
+                                <span class="text-sm font-bold text-white">Option A — Hosted (zero install, stateless tools only)</span>
                             </div>
                             <div class="p-6 font-mono text-sm text-green-300 space-y-2">
-                                <div><span class="text-slate-500"># Cursor</span></div>
-                                <div>uv run fastmcp install cursor src/octopilot_mcp/server.py \</div>
-                                <div class="pl-4">--name octopilot --env OP_BINARY=/usr/local/bin/op</div>
+                                <div><span class="text-slate-500"># Cursor — no clone, no pip, no Docker required</span></div>
+                                <div>fastmcp install cursor https://mcp.octopilot.app --name octopilot</div>
                                 <div class="mt-2"><span class="text-slate-500"># Claude Desktop</span></div>
-                                <div>uv run fastmcp install claude src/octopilot_mcp/server.py \</div>
-                                <div class="pl-4">--name octopilot --env OP_BINARY=/usr/local/bin/op</div>
+                                <div>fastmcp install claude https://mcp.octopilot.app --name octopilot</div>
                             </div>
                         </div>
 
+                        {/* Option B — Local */}
                         <div class="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
-                            <div class="px-6 py-4 bg-slate-900 border-b border-slate-800">
-                                <span class="text-sm font-bold text-slate-300">3. Inspect from the terminal</span>
+                            <div class="px-6 py-4 bg-slate-900 border-b border-slate-800 flex items-center gap-3">
+                                <i class="fa-solid fa-laptop text-slate-400"></i>
+                                <span class="text-sm font-bold text-slate-300">Option B — Local (requires Docker, full suite)</span>
                             </div>
-                            <div class="p-6 font-mono text-sm text-green-300 space-y-1">
-                                <div><span class="text-slate-500"># List all tools</span></div>
+                            <div class="p-6 font-mono text-sm text-green-300 space-y-2">
+                                <div><span class="text-slate-500"># 1. Clone and install</span></div>
+                                <div>git clone https://github.com/octopilot/octopilot-mcp</div>
+                                <div>cd octopilot-mcp && uv sync</div>
+                                <div class="mt-2"><span class="text-slate-500"># 2. Register with your IDE</span></div>
+                                <div>uv run fastmcp install cursor src/octopilot_mcp/server.py --name octopilot</div>
+                                <div class="mt-2"><span class="text-slate-500"># 3. Inspect tools</span></div>
                                 <div>uv run fastmcp list src/octopilot_mcp/server.py</div>
-                                <div class="mt-2"><span class="text-slate-500"># Call a tool directly</span></div>
-                                <div>uv run fastmcp call src/octopilot_mcp/server.py tool_list_actions</div>
                             </div>
                         </div>
                     </div>
