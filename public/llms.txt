@@ -65,7 +65,16 @@ The `pipeline-context` JSON from `detect-contexts` flows through all jobs:
 
 Octopilot provides a [Model Context Protocol server](https://octopilot.app/docs/mcp) (`octopilot-mcp`)
 that enables AI agents to detect languages, generate CI workflows, onboard repositories, and
-run `op build` directly. See [/docs/mcp](https://octopilot.app/docs/mcp) for setup.
+run `op build` directly.
+
+Install in one command (requires Docker for the full suite):
+  curl -fsSL https://mcp.octopilot.app/install | sh
+
+Or connect to the hosted server (zero install, stateless tools):
+  fastmcp install cursor https://mcp.octopilot.app
+  fastmcp install claude https://mcp.octopilot.app
+
+See [/docs/mcp](https://octopilot.app/docs/mcp) for full documentation.
 
 ## Source repositories
 
