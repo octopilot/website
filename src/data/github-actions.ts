@@ -97,6 +97,21 @@ jobs:
           subject-name: ghcr.io/\${{ github.repository_owner }}/my-app
           subject-digest: \${{ steps.push.outputs.digest }}
           push-to-registry: true`,
+    gotchas: [
+      {
+        language: "Container mode",
+        title: "GHCR DENIED on first push (or any private registry)",
+        symptom: "Pack's ANALYZE phase fails with: DENIED: requested access to the resource is denied — even though docker/login-action ran successfully in the same job.",
+        fix: "In container mode (build_bypass: false), op build runs inside ghcr.io/octopilot/op. docker/login-action stores credentials in ~/.docker/config.json on the host runner, but that file is not inside the container. Pack makes direct HTTPS calls to the registry API during ANALYZE — without credentials it gets DENIED even for an existence check. This is fixed: the action now mounts ${HOME}/.docker read-only into the container. If you see this error, upgrade to the latest octopilot/actions/octopilot@main. With build_bypass: true the binary runs on the host which already has the credentials — this issue does not apply.",
+        code: `# Bypass mode avoids the issue entirely and is preferred when you
+# already have a pre-built op binary from a prior job:
+- uses: octopilot/actions/octopilot@main
+  with:
+    registry: ghcr.io/my-org
+    build_bypass: true
+    op_binary: ./dist/op-linux-amd64`
+      }
+    ],
     icon: "fa-rocket",
     iconColor: "text-blue-400",
     iconBg: "bg-blue-500/10"
