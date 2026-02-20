@@ -297,6 +297,22 @@ jobs:
         with:
           body_path: \${{ steps.notes.outputs.body_file }}
           generate_release_notes: false`,
+    gotchas: [
+      {
+        title: "Release workflow requires REPO_PAT, not GITHUB_TOKEN",
+        symptom: "The version bump commit is pushed but downstream CI (the build job that creates container images) never triggers. The release completes but no new images are published.",
+        fix: "GITHUB_TOKEN cannot push commits back to the repo in a way that triggers downstream CI workflows — GitHub blocks this to prevent infinite loops. Use REPO_PAT (a Personal Access Token with contents:write scope). The octopilot org has REPO_PAT configured as an org-level secret. Pass it when calling the reusable workflow:",
+        code: `# In your release.yml
+jobs:
+  release:
+    uses: octopilot/octopilot-workflows/.github/workflows/workflow-release.yml@main
+    with:
+      mode: rust
+      bump: \${{ inputs.bump }}
+    secrets:
+      repo_token: \${{ secrets.REPO_PAT }}   # NOT secrets.GITHUB_TOKEN`
+      }
+    ],
     icon: "fa-note-sticky",
     iconColor: "text-green-400",
     iconBg: "bg-green-500/10"
