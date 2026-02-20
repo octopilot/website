@@ -2008,5 +2008,385 @@ curl -fsSL https://mcp.octopilot.app/install | sh
                 </div>
             </section>
         `
+    },
+    {
+        id: '20',
+        title: 'One Config File, Always in Sync: The Octopilot Subscription Model',
+        excerpt: 'CI/CD pipelines drift. You fix a lint timeout in one repository and forget seven others. You update a toolchain version in the workflow but not the Dockerfile. The Octopilot subscription model gives you a single config file as the contract — commit it, and your pipeline stays current across every repository.',
+        category: 'Developer',
+        readTime: '7 min read',
+        image: '/assets/blog/subscription-model.png',
+        author: {
+            name: 'Taylor Morgan',
+            role: 'Developer Advocate',
+            avatar: '/assets/blog/avatar-alex.jpg'
+        },
+        slug: 'octopilot-subscription-model',
+        relatedSlugs: ['octopilot-actions-intro', 'zero-config-ci-detect-contexts', 'why-we-open-sourced-pipeline-tools'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    There is a category of engineering problem that is easy to describe and surprisingly hard to solve at scale: keeping CI/CD pipelines consistent and current across a growing number of repositories. Each repository starts with a pipeline that looks right. Six months later, it has drifted — the toolchain version is behind, a timeout that was fixed elsewhere hasn't been applied here, a new security scan has been added to some repos but not others.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Octopilot approaches this differently. Rather than each repository owning its own complete pipeline definition, you describe what <em>kind</em> of pipeline you want in a single lightweight config file — <code>.github/octopilot.yaml</code> — and Octopilot keeps the pipeline implementation current. When the platform evolves, your repository benefits automatically.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        <code>.github/octopilot.yaml</code> is your subscription contract. It declares what you need — language contexts, registry, deployment target, environment profiles. Octopilot keeps your pipeline aligned with it. You own the intent; the platform owns the implementation details.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Pipeline Drift Problem</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Pipeline drift is insidious because it's invisible until something breaks. A team that manages ten repositories each with their own <code>.github/workflows/ci.yml</code> has ten independent moving parts. When best practices evolve — a new linter version, a better caching strategy, a security hardening requirement — applying the change means touching ten files in ten repositories. In practice, it means touching three and meaning to get the others later.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">What drift looks like at 30 repositories</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div>12 repositories on golangci-lint v1.54, 8 on v1.60, 10 on v1.64 — none failing, all subtly inconsistent</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div>A required SLSA attestation step added to new repositories but missing from older ones</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div>Timeout configuration fixed in the service that hit it — 29 others still have the original value</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div>A platform engineer who understood the pipeline architecture has left the team — nobody knows which version of the workflow is "right"</div></li>
+                    </ul>
+                </div>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The underlying issue is that pipeline configuration is treated as application code: stored in the repository it serves, owned by the team that runs it, evolved independently. This makes sense for application-specific behaviour. It makes much less sense for the scaffolding — the toolchain setup, the lint flags, the cache strategies, the attestation steps — that should be identical everywhere.
+                </p>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Subscription Contract</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Subscribing a repository to Octopilot takes one file. <code>.github/octopilot.yaml</code> declares your intent: what registry to push to, which deployment environment to target, which profiles to activate. It does not contain workflow YAML, toolchain versions, or implementation details. Those are the platform's responsibility.
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+# .github/octopilot.yaml
+registry: ghcr.io/my-org
+profiles:
+  - production
+  - staging
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Commit this file and push. Octopilot reads it and aligns your repository's pipeline with the current platform standard — creating or updating the workflows that implement what you've declared. Critically, it does this by reading your existing files first. If you have customisations, they are preserved. Only the parts that need to change are changed.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">The separation of concerns</h3>
+                    <ul class="space-y-4 text-gray-300">
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-file-pen text-blue-400 mt-1"></i>
+                            <div><strong>You own:</strong> <code>.github/octopilot.yaml</code> — your intent, your registry, your deployment targets, your environment profiles. This file changes when <em>your</em> requirements change.</div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-gears text-purple-400 mt-1"></i>
+                            <div><strong>Octopilot owns:</strong> The pipeline implementation — toolchain versions, lint configuration, cache strategies, attestation steps, platform upgrades. This evolves when the <em>platform</em> evolves.</div>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">What Changes When the Platform Evolves</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    When Octopilot's platform team ships an improvement — say, switching <code>golangci-lint</code> to compile-from-source mode to fix the Go version mismatch issue, or adding disk cleanup before Docker builds — subscribed repositories receive the improvement on their next pipeline update. They don't need to track the change, review a PR, or understand why the modification was made. They declared their intent; the platform delivered it.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    This is not magic. When Octopilot updates your pipeline, it produces a reviewable change. You can see exactly what changed, why it changed (the commit message explains it), and what the new pipeline looks like. You retain full visibility and the ability to customise. What you give up is the obligation to initiate and track every platform-level improvement yourself.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Subscribing a repository with the MCP</h3>
+                    <p class="text-gray-300 mb-4">
+                        The fastest path to a subscribed, properly configured repository is through the <a href="/blog/octopilot-mcp-ai-agent-cicd" class="text-blue-400 hover:text-blue-300">Octopilot MCP</a>. Ask your AI agent to onboard the repository and it will detect your languages, generate the <code>skaffold.yaml</code>, create the initial <code>.github/octopilot.yaml</code>, and produce the CI workflow — all in one conversation. The subscription file is then the stable, long-lived artefact that you maintain going forward.
+                    </p>
+                </div>
+                <div class="p-6 bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">For platform teams</h4>
+                    <p class="text-gray-300">
+                        If you are a platform team managing CI/CD standards across multiple product teams, the subscription model gives you a propagation mechanism without requiring access to every repository. Teams opt in by committing the config file. When you improve the platform, subscribed repositories receive the improvement through a standard PR process — visible, reviewable, and non-disruptive.
+                    </p>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '21',
+        title: 'Golden Paths Were Right. The Tooling Was Wrong.',
+        excerpt: '"Team Topologies" and "Accelerate" told us exactly what great engineering organisations look like. The hard part was always the implementation: how do you give every team a golden path without a platform team becoming a bottleneck? Composable, self-detecting CI actions are the answer we landed on.',
+        category: 'Team',
+        readTime: '12 min read',
+        image: '/assets/blog/golden-paths-platform-engineering.png',
+        author: {
+            name: 'Marcus Chen',
+            role: 'Platform Architect',
+            avatar: '/assets/blog/avatar-marcus.jpg'
+        },
+        slug: 'golden-paths-composable-actions',
+        relatedSlugs: ['composable-cicd-composite-actions', 'octopilot-actions-intro', 'why-we-open-sourced-pipeline-tools'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The research is settled. <em>Accelerate</em> — the book by Nicole Forsgren, Jez Humble, and Gene Kim, based on six years of data from the DORA (DevOps Research and Assessment) programme — identified deployment frequency, lead time for changes, mean time to restore, and change failure rate as the four key metrics that distinguish high-performing engineering organisations from the rest. Teams that score well on these metrics ship better software faster. The correlation is not marginal. Elite performers deploy on demand; low performers deploy monthly or less.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Three years later, Matthew Skelton and Manuel Pais published <em>Team Topologies</em>, which gave us the organisational vocabulary to act on the DORA findings: stream-aligned teams, platform teams, enabling teams, and — critically — the concept of the <strong>golden path</strong>. A golden path is the opinionated, supported route to production that a platform team provides to stream-aligned teams. It reduces cognitive load, eliminates duplicated infrastructure decisions, and lets product teams focus on their actual product.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        The theory has been right for years. The problem was always implementation: most golden path tools became the bottleneck they were designed to eliminate. Composable, auto-detecting CI actions are the first implementation we've found that actually delivers on the promise — without a platform team becoming a tax on every engineering team's velocity.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Why Golden Path Tools Became Bottlenecks</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The Phoenix Project framed IT operations as a flow problem. Constraints in the value stream limit throughput; the right response is to identify and elevate the constraint. For many organisations that embraced this framing, the CI/CD infrastructure team became the constraint. Every new technology, every language addition, every pipeline change required a ticket, a review, a platform team sprint. The golden path became the golden queue.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The DevOps Handbook identifies the "Three Ways" as the foundation of DevOps practice: flow (fast left-to-right movement from development to production), feedback (fast and amplified right-to-left feedback), and continual learning (a culture of experimentation and risk-taking from the right). Most golden path implementations optimise for flow — they make the happy path fast. They frequently undermine feedback and learning by creating an opaque platform that teams consume but cannot influence.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">The symptoms of a golden path that's become a constraint</h3>
+                    <ul class="space-y-4 text-gray-300">
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-hourglass-half text-red-400 mt-1"></i>
+                            <div>
+                                <strong>Ticket-based pipeline changes:</strong> Teams open a request to add a language, change a timeout, or add a scan. The platform team processes it in the next sprint. Weeks pass.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-lock text-red-400 mt-1"></i>
+                            <div>
+                                <strong>Immutable workflows:</strong> The pipeline is provided as a black box. Teams cannot customise it without forking, and forking means losing future updates. The platform team's review process exists because they can't safely accept changes.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-puzzle-piece text-red-400 mt-1"></i>
+                            <div>
+                                <strong>Monolithic design:</strong> The golden path is designed for the common case. Teams with unusual requirements — a monorepo with mixed languages, a service that needs a specific build tool — find the path doesn't fit and route around it.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-user-slash text-red-400 mt-1"></i>
+                            <div>
+                                <strong>Knowledge concentration:</strong> The platform is understood only by the platform team. Stream-aligned teams treat it as infrastructure — something that either works or gets ticketed. Continuous learning stops at the platform boundary.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    <em>Team Topologies</em> anticipates this failure mode. Skelton and Pais distinguish between platform teams that reduce cognitive load through good APIs and those that increase it through bureaucracy. The difference is not intent — platform teams almost always intend to help — but architecture. A platform built on monolithic, opaque primitives will tend toward the bottleneck; one built on composable, transparent primitives tends toward the enabler.
+                </p>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Composability as the Design Principle</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The insight that changed our approach was this: <strong>the golden path should be the easiest path, not the only path</strong>. If a team can understand every component of their pipeline, modify any component that doesn't fit, and still benefit from platform-managed improvements to the components they haven't changed — that is a golden path that does not create a bottleneck.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    This is exactly the design goal behind the Octopilot actions library. Each action — <code>detect-contexts</code>, <code>lint</code>, <code>test</code>, <code>janitor</code>, <code>octopilot</code>, <code>bump-version</code>, <code>release</code> — is a self-contained, documented unit with explicit inputs and outputs. Teams can use the full pipeline or individual actions. They can replace any action with their own implementation of the same interface. They can inspect the source, understand exactly what each action does, and make informed decisions about customisation.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">What <em>Accelerate</em>'s findings look like in practice</h3>
+                    <ul class="space-y-4 text-gray-300">
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-gauge-high text-emerald-400 mt-1"></i>
+                            <div>
+                                <strong>Deployment frequency:</strong> When a new repository can be fully onboarded to a production-grade pipeline in under an hour (via the MCP or manually), the barrier to creating and deploying new services drops. Frequency increases because setup cost decreases.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-clock text-emerald-400 mt-1"></i>
+                            <div>
+                                <strong>Lead time for changes:</strong> When lint, test, and build each run in their own job and complete in parallel, the total pipeline time shrinks. The <code>janitor</code> action recovering 15 GB of disk before the Docker build means fewer retries and more predictable build times.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-rotate text-emerald-400 mt-1"></i>
+                            <div>
+                                <strong>Mean time to restore:</strong> When every repository has the same pipeline shape, an incident in one service informs the response in every other. Operators don't need to re-learn the deployment mechanism per service.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-shield-halved text-emerald-400 mt-1"></i>
+                            <div>
+                                <strong>Change failure rate:</strong> SLSA attestation, consistent lint enforcement, and multi-arch builds by default mean that the things that tend to cause production failures — unverified artefacts, platform-specific bugs, unscanned code — are addressed at the pipeline level for every team, not just the ones that thought to add them.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Platform Team as Library Maintainer</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The mental model shift that made this work was treating the platform team not as the operator of a service that other teams consume, but as the maintainer of a library that other teams use. Library maintainers publish versioned releases. Users pin to a version, see changelogs, and upgrade on their own schedule. Breaking changes are communicated, not imposed.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    This is precisely how <code>octopilot/actions@main</code> works. The actions are versioned. Teams that pin to <code>@main</code> get continuous improvements. Teams that pin to a specific tag get stability. The platform team can improve the <code>lint</code> action — fixing the golangci-lint Go version mismatch, extending the timeout, adding a new linter — and every team on <code>@main</code> benefits on their next push without a single ticket or PR review.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Gene Kim's framing in <em>The Phoenix Project</em> is instructive here: the goal is not for the platform team to do the work for stream-aligned teams, but to enable stream-aligned teams to do the work themselves safely and quickly. A composable action library achieves this. A monolithic "CI service" does not.
+                </p>
+                <div class="p-6 bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">Further reading</h4>
+                    <p class="text-gray-300">
+                        If you want to go deeper on the theory: <em>Accelerate</em> (Forsgren, Humble, Kim) for the metrics; <em>Team Topologies</em> (Skelton, Pais) for the organisational model; <em>The DevOps Handbook</em> (Kim, Willis, Humble, Debois) for the Three Ways; and the annual <a href="https://dora.dev/research/" class="text-blue-400 hover:text-blue-300">DORA State of DevOps Report</a> for current benchmarks. The practices described in this post are a direct implementation of the principles those works describe.
+                    </p>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '29',
+        title: 'From Container Build to Running Service: Octopilot and FluxCD End-to-End',
+        excerpt: 'Octopilot handles the build side — detect, lint, test, multi-arch container image, SLSA attestation. FluxCD handles the deployment side — GitOps reconciliation, Helm releases, image automation. This post shows how to connect the two into a complete path from source commit to running service.',
+        category: 'Team',
+        readTime: '11 min read',
+        image: '/assets/blog/octopilot-fluxcd-gitops.png',
+        author: {
+            name: 'Chris Anderson',
+            role: 'Platform Engineer',
+            avatar: '/assets/blog/avatar-chris.jpg'
+        },
+        slug: 'octopilot-fluxcd-end-to-end',
+        relatedSlugs: ['multi-arch-containers-op-action', 'octopilot-actions-intro', 'network-security-cloud-runners'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    A CI/CD pipeline has two distinct halves that are often described together but implemented separately. The <strong>CI half</strong> — continuous integration — takes source code and produces a verified artefact: a tested, linted, attested container image in a registry. The <strong>CD half</strong> — continuous delivery or deployment — takes that artefact and delivers it to an environment.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Octopilot handles the CI half. <a href="https://fluxcd.io" class="text-blue-400 hover:text-blue-300">FluxCD</a> handles the CD half. They are independently valuable tools that compose naturally into a complete path from a developer's source commit to a running service in a Kubernetes cluster — without coupling the build pipeline to the deployment mechanism.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        The handoff point between Octopilot and FluxCD is the container registry. Octopilot pushes a versioned, attested image; FluxCD's Image Automation detects the new digest and updates your deployment manifests. The two systems remain decoupled — you can replace either without touching the other.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Build-Deploy Gap</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The most common approach to closing the build-deploy gap is to add deployment steps to the CI pipeline: after the image is pushed, the pipeline runs <code>kubectl set image</code> or <code>helm upgrade</code>. This works but creates coupling. The pipeline needs cluster credentials. It needs to know which cluster to target. Promotion between environments requires branching logic in the pipeline. Rollbacks require re-triggering the pipeline. The "CI pipeline" becomes a CI/CD pipeline that knows too much about infrastructure.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">What coupling the build to the deploy costs you</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-xmark text-red-400 mt-1"></i><div>The pipeline needs write access to your production cluster from GitHub Actions — a significant blast radius if the pipeline is compromised</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-xmark text-red-400 mt-1"></i><div>Rollback requires knowing which previous image tag to roll back to and re-triggering a workflow rather than reverting a Git commit</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-xmark text-red-400 mt-1"></i><div>Environment promotion logic (dev → staging → production) ends up as branching logic in YAML rather than as a Git branching strategy</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-xmark text-red-400 mt-1"></i><div>Drift detection is manual — there is no continuous reconciliation, so a manual <code>kubectl</code> change silently diverges from the desired state</div></li>
+                    </ul>
+                </div>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    GitOps — the practice of using Git as the single source of truth for both application code and infrastructure state — solves these problems by separating the build pipeline from the deployment mechanism. The pipeline's job ends when it pushes a verified image. The GitOps operator's job begins when it detects the new image and reconciles the cluster state to match.
+                </p>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">How FluxCD's Image Automation Works</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    FluxCD's <a href="https://fluxcd.io/flux/guides/image-update/" class="text-blue-400 hover:text-blue-300">Image Automation</a> component watches a container registry for new image tags and automatically updates the Git repository that stores your deployment manifests. The update is itself a Git commit — auditable, revertable, and triggering the same reconciliation loop that handles all other manifest changes.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Three FluxCD resources define this behaviour:
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <ul class="space-y-4 text-gray-300">
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-magnifying-glass text-blue-400 mt-1"></i>
+                            <div>
+                                <strong><code>ImageRepository</code></strong> — tells FluxCD which registry and image to watch. Flux periodically scans the registry and maintains a list of available tags.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-filter text-cyan-400 mt-1"></i>
+                            <div>
+                                <strong><code>ImagePolicy</code></strong> — defines which tag to select from the available list. A semver policy selects the latest <code>v*.*.*</code> tag; a <code>semver:&gt;=1.0.0</code> policy pins to a minimum version; a timestamp or alphabetical policy can select the most recently pushed tag.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-pen-to-square text-violet-400 mt-1"></i>
+                            <div>
+                                <strong><code>ImageUpdateAutomation</code></strong> — watches for <code>ImagePolicy</code> changes and commits the new tag to the Git repository, targeting files annotated with a marker comment that tells Flux where to write the image reference.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+# Example ImageRepository — watches ghcr.io/my-org/my-service
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: my-service
+  namespace: flux-system
+spec:
+  image: ghcr.io/my-org/my-service
+  interval: 1m
+
+---
+# Example ImagePolicy — selects the latest semver tag
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: my-service
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: my-service
+  policy:
+    semver:
+      range: ">=1.0.0"
+</pre>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Connecting the Octopilot Build to FluxCD</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The handoff is straightforward. Octopilot's <code>op build</code> action pushes the image to the registry with a versioned tag (e.g. <code>ghcr.io/my-org/my-service:v1.4.2</code>) and outputs the full reference including the digest in <code>build_result.json</code>. FluxCD's <code>ImageRepository</code> detects the new tag within its polling interval (typically one minute). The <code>ImagePolicy</code> evaluates whether it matches the selection criteria. If it does, <code>ImageUpdateAutomation</code> commits the new tag to your deployment manifests.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    To enable the auto-update, annotate the image reference in your Helm values or Kustomize manifest with a FluxCD marker comment:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+# In your Helm values file (values.yaml):
+image:
+  repository: ghcr.io/my-org/my-service
+  tag: v1.4.2 # {"$imagepolicy": "flux-system:my-service:tag"}
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    When FluxCD's image automation runs, it rewrites the <code>tag</code> value in-place, commits the change to Git, and the standard FluxCD reconciliation loop applies the updated Helm release to the cluster. The entire flow — from <code>git push</code> to running pod — is observable as a sequence of Git commits and Kubernetes events.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">The complete flow</h3>
+                    <ol class="list-none space-y-3 text-gray-300">
+                        <li class="flex gap-3"><span class="text-blue-400 font-bold shrink-0">1.</span><div>Developer pushes to <code>main</code></div></li>
+                        <li class="flex gap-3"><span class="text-blue-400 font-bold shrink-0">2.</span><div>Octopilot CI: detect → lint + test (parallel) → build multi-arch image → push <code>ghcr.io/my-org/my-service:v1.4.2</code> → SLSA attest</div></li>
+                        <li class="flex gap-3"><span class="text-blue-400 font-bold shrink-0">3.</span><div>FluxCD <code>ImageRepository</code> detects <code>v1.4.2</code> within polling interval</div></li>
+                        <li class="flex gap-3"><span class="text-blue-400 font-bold shrink-0">4.</span><div>FluxCD <code>ImagePolicy</code> selects <code>v1.4.2</code> as the latest semver match</div></li>
+                        <li class="flex gap-3"><span class="text-blue-400 font-bold shrink-0">5.</span><div>FluxCD <code>ImageUpdateAutomation</code> commits <code>tag: v1.4.2</code> to the deployment manifest Git repo</div></li>
+                        <li class="flex gap-3"><span class="text-blue-400 font-bold shrink-0">6.</span><div>FluxCD <code>HelmRelease</code> reconciliation applies the updated values to the cluster</div></li>
+                        <li class="flex gap-3"><span class="text-emerald-400 font-bold shrink-0">✓</span><div>New pod running; rollback = <code>git revert</code> the automation commit</div></li>
+                    </ol>
+                </div>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The two systems remain fully decoupled. Octopilot does not know what cluster the image will run in. FluxCD does not know how the image was built. Replacing either — switching from Octopilot to a different build tool, or from FluxCD to ArgoCD — requires no changes to the other side of the boundary.
+                </p>
+                <div class="p-6 bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">FluxCD documentation</h4>
+                    <p class="text-gray-300">
+                        The complete FluxCD image automation documentation is at <a href="https://fluxcd.io/flux/guides/image-update/" class="text-blue-400 hover:text-blue-300">fluxcd.io/flux/guides/image-update</a>. The <a href="https://fluxcd.io/flux/components/image/" class="text-blue-400 hover:text-blue-300">Image Reflector and Automation controllers</a> reference covers all configuration options for <code>ImageRepository</code>, <code>ImagePolicy</code>, and <code>ImageUpdateAutomation</code>.
+                    </p>
+                </div>
+            </section>
+        `
     }
 ];
