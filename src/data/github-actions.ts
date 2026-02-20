@@ -356,6 +356,216 @@ jobs:
     iconBg: "bg-purple-500/10"
   },
   {
+    id: "detect-contexts",
+    title: "Detect Contexts",
+    path: "octopilot/actions/detect-contexts@main",
+    version: "v1",
+    description: "Parses skaffold.yaml to auto-detect build contexts, languages, and versions. Outputs a pipeline-context JSON object consumed by the lint, test, janitor, and build actions — the foundation of the octopilot CI pipeline.",
+    features: [
+      "Detects Go, Rust, Node, Python, Java",
+      "Generates strategy.matrix from artifacts",
+      "Outputs consolidated pipeline-context JSON",
+      "Reads skaffold.yaml automatically"
+    ],
+    inputs: [
+      { name: "skaffold-file", description: "Path to skaffold.yaml", required: false, default: "skaffold.yaml" }
+    ],
+    outputs: [
+      { name: "pipeline-context", description: "Consolidated CI context JSON — pass to lint, test, janitor, and build actions" },
+      { name: "matrix", description: "JSON matrix for strategy.matrix.include" },
+      { name: "languages", description: "Comma-separated list of detected languages" }
+    ],
+    example: `name: CI
+on:
+  push:
+    branches: [main]
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      pipeline-context: \${{ steps.detect.outputs.pipeline-context }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: detect
+        uses: octopilot/actions/detect-contexts@main
+
+  lint:
+    needs: detect
+    if: toJSON(fromJson(needs.detect.outputs.pipeline-context).languages) != '[]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: octopilot/actions/lint@main
+        with:
+          pipeline-context: \${{ needs.detect.outputs.pipeline-context }}`,
+    icon: "fa-magnifying-glass-chart",
+    iconColor: "text-cyan-400",
+    iconBg: "bg-cyan-500/10"
+  },
+  {
+    id: "bump-version",
+    title: "Bump Version",
+    path: "octopilot/actions/bump-version@main",
+    version: "v1",
+    description: "Bumps the semantic version in a project's version file (Cargo.toml, package.json, go version file, pom.xml, etc.) and outputs the new and old version strings. Used by the release workflow before tagging.",
+    features: [
+      "Go, Rust, Node, Python, Java, .NET",
+      "major / minor / patch bump types",
+      "Custom file path support",
+      "Outputs old and new version"
+    ],
+    inputs: [
+      { name: "mode", description: "Language mode: go, rust, node, python, maven, gradle, dotnet, text", required: false, default: "go" },
+      { name: "bump", description: "Bump type: major, minor, or patch", required: false, default: "patch" },
+      { name: "file", description: "Path to version file. Defaults: go → internal/cmd/version.go, rust → Cargo.toml", required: false }
+    ],
+    outputs: [
+      { name: "version", description: "The new version string (without v prefix)" },
+      { name: "old_version", description: "The previous version string" }
+    ],
+    example: `- name: Bump version
+  id: bump
+  uses: octopilot/actions/bump-version@main
+  with:
+    mode: rust
+    bump: patch
+    file: api/Cargo.toml
+
+- name: Tag and push
+  run: |
+    git tag "v\${{ steps.bump.outputs.version }}"
+    git push origin "v\${{ steps.bump.outputs.version }}"`,
+    icon: "fa-code-branch",
+    iconColor: "text-violet-400",
+    iconBg: "bg-violet-500/10"
+  },
+  {
+    id: "previous-tag",
+    title: "Previous Tag",
+    path: "octopilot/actions/previous-tag@main",
+    version: "v1",
+    description: "Finds the most recent git tag before the current commit. Used in release pipelines to determine the range for changelog and release note generation.",
+    features: [
+      "Works with shallow and full clones",
+      "Configurable fallback value",
+      "Skips the current tag automatically"
+    ],
+    inputs: [
+      { name: "fallback", description: "Value to return if no previous tag exists (e.g. v0.0.0)", required: false, default: "" }
+    ],
+    outputs: [
+      { name: "tag", description: "The previous tag, or the fallback value if none found" }
+    ],
+    example: `- name: Find Previous Tag
+  id: prev_tag
+  uses: octopilot/actions/previous-tag@main
+  with:
+    fallback: "v0.0.0"
+
+- name: Generate Release Notes
+  uses: octopilot/actions/release@main
+  with:
+    version: \${{ github.ref_name }}
+    since_tag: \${{ steps.prev_tag.outputs.tag }}
+    provider: anthropic`,
+    icon: "fa-tag",
+    iconColor: "text-slate-400",
+    iconBg: "bg-slate-500/10"
+  },
+  {
+    id: "is-tag",
+    title: "Is Tag",
+    path: "octopilot/actions/is-tag@main",
+    version: "v1",
+    description: "Checks whether the current commit is a git tag. Useful for conditionally running release steps — works from both GITHUB_REF and git describe, so it functions in CI and locally triggered workflows.",
+    features: [
+      "Checks GITHUB_REF and git describe",
+      "Returns tag name when true",
+      "Zero inputs required"
+    ],
+    inputs: [],
+    outputs: [
+      { name: "is_tag", description: "true if the current commit is tagged, false otherwise" },
+      { name: "tag", description: "The tag name if is_tag is true, empty otherwise" }
+    ],
+    example: `- name: Check if tag
+  id: tag_check
+  uses: octopilot/actions/is-tag@main
+
+- name: Publish release
+  if: steps.tag_check.outputs.is_tag == 'true'
+  run: echo "Publishing \${{ steps.tag_check.outputs.tag }}"`,
+    icon: "fa-circle-check",
+    iconColor: "text-emerald-400",
+    iconBg: "bg-emerald-500/10"
+  },
+  {
+    id: "build-ephemeral",
+    title: "Build Ephemeral",
+    path: "octopilot/actions/build-ephemeral@main",
+    version: "v1",
+    description: "Builds and pushes a container image to ttl.sh (a free ephemeral registry) for short-lived use in preview environments, integration tests, or PR review deployments. Images expire automatically after the configured TTL.",
+    features: [
+      "Pushes to ttl.sh (no auth needed)",
+      "Configurable TTL (2h, 1d, etc.)",
+      "Auto-generates image name from repo + SHA",
+      "Returns full image reference"
+    ],
+    inputs: [
+      { name: "ttl", description: "Time to live for the image (e.g. 2h, 1d)", required: false, default: "2h" },
+      { name: "platform", description: "Target platform (e.g. linux/amd64)", required: false, default: "linux/amd64" },
+      { name: "registry", description: "Override the default ttl.sh image name", required: false, default: "" },
+      { name: "op_version", description: "Version of the op builder image to use", required: false, default: "latest" }
+    ],
+    outputs: [
+      { name: "image_ref", description: "Full reference to the pushed ephemeral image (e.g. ttl.sh/org-repo-abc1234:2h)" }
+    ],
+    example: `- name: Build ephemeral image for PR review
+  id: ephemeral
+  uses: octopilot/actions/build-ephemeral@main
+  with:
+    ttl: "4h"
+    platform: linux/amd64
+
+- name: Deploy to preview environment
+  run: |
+    echo "Image: \${{ steps.ephemeral.outputs.image_ref }}"
+    # deploy to preview using the ephemeral ref`,
+    icon: "fa-clock-rotate-left",
+    iconColor: "text-amber-400",
+    iconBg: "bg-amber-500/10"
+  },
+  {
+    id: "read-properties",
+    title: "Read Properties",
+    path: "octopilot/actions/read-properties@main",
+    version: "v1",
+    description: "Reads a .properties file (key=value format) and exports all entries as GITHUB_ENV environment variables, making them available to subsequent steps. Useful for sharing pipeline configuration across jobs.",
+    features: [
+      "Exports to GITHUB_ENV automatically",
+      "Standard key=value format",
+      "Works with pipeline.properties files"
+    ],
+    inputs: [
+      { name: "file", description: "Path to the .properties file to read", required: true }
+    ],
+    example: `# pipeline.properties contains:
+# REGISTRY=ghcr.io/my-org
+# NAMESPACE=production
+
+- name: Load pipeline config
+  uses: octopilot/actions/read-properties@main
+  with:
+    file: .github/pipeline.properties
+
+- name: Use the values
+  run: echo "Deploying to \${{ env.REGISTRY }}"`,
+    icon: "fa-file-lines",
+    iconColor: "text-slate-400",
+    iconBg: "bg-slate-500/10"
+  },
+  {
     id: "janitor",
     title: "Janitor",
     path: "octopilot/actions/janitor@main",
