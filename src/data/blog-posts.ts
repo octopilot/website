@@ -573,7 +573,7 @@ rotation:
         author: {
             name: 'David Kumar',
             role: 'Security Operations',
-            avatar: '/assets/blog/avatar-sam.jpg' // Reusing Sam's avatar as David's wasn't in list but used in HTML
+            avatar: '/assets/blog/avatar-sam.jpg'
         },
         painPoint: 'Central vault breach exposes all secrets, rotation takes days, blast radius is catastrophic',
         slug: 'incident-response-at-scale',
@@ -597,6 +597,1009 @@ rotation:
                         <li><strong>Automate:</strong> The Bot detects the removal and triggers a re-encryption of all secrets across all repos, removing the compromised user's public key from the access list.</li>
                         <li><strong>Deploy:</strong> The new encrypted files are deployed. Even if the attacker has the old files, they are useless once the backend services rotate the actual values (Phase 2).</li>
                     </ol>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '10',
+        title: 'Your CI/CD Pipeline, Assembled: Introducing Octopilot Actions',
+        excerpt: 'Copy-paste CI/CD is a tax every engineering team pays repeatedly. Octopilot Actions is a composable, language-aware library of 18 GitHub Actions that assemble into a complete pipeline from a single skaffold.yaml—no boilerplate required.',
+        category: 'Developer',
+        readTime: '8 min read',
+        image: '/assets/blog/octopilot-actions-intro.png',
+        author: {
+            name: 'Taylor Morgan',
+            role: 'Developer Advocate',
+            avatar: '/assets/blog/avatar-alex.jpg'
+        },
+        slug: 'octopilot-actions-intro',
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Every engineering team eventually arrives at the same place: a graveyard of copy-pasted <code>.github/workflows</code> files, each slightly different, none kept in sync. The Go repo has a lint job that works. The Rust repo has a similar one that's three versions behind. The Python service has a workflow nobody remembers writing. When something breaks, you fix it in one place and forget the other eleven.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        Octopilot Actions is a library of 18 composable GitHub Actions that snap together into a complete CI/CD pipeline. One <code>skaffold.yaml</code> drives everything — language detection, toolchain setup, lint, test, multi-arch container builds, and automated releases.
+                    </p>
+                </div>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Today we're publishing a formal reference for all 18 actions, along with this series of deep dives into how they work and the problems they solve.
+                </p>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Copy-Paste Tax</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The GitHub Actions marketplace is vast, but it doesn't solve the composition problem. You still need to know which actions to use, in what order, with what inputs, and how to wire their outputs together. For a polyglot organisation running Go APIs, Rust services, and Python tooling, that's a non-trivial amount of institutional knowledge encoded into YAML that lives in every repository.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">What gets duplicated</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div><strong>Toolchain setup:</strong> <code>actions/setup-go</code>, <code>dtolnay/rust-toolchain</code>, <code>actions/setup-python</code> — different versions, different cache configs in every repo.</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div><strong>Linting:</strong> golangci-lint flags, Clippy deny rules, Ruff config — diverge silently over time.</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div><strong>Container builds:</strong> Docker login, buildx setup, multi-arch flags, SLSA attestation — dozens of lines repeated.</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div><strong>Releases:</strong> Version bumping, tagging, changelog generation — often skipped entirely because it's too much work to set up.</div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Octopilot Pipeline Shape</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Octopilot Actions are designed around a single contract: the <strong>pipeline-context</strong> JSON object. One action (<code>detect-contexts</code>) reads your <code>skaffold.yaml</code> and produces it. Every downstream action consumes it to know what languages are present, which tool versions to install, and what commands to run.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Pipeline at a glance</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-magnifying-glass-chart text-cyan-400 mt-1"></i><div><strong><code>detect-contexts</code></strong> — reads <code>skaffold.yaml</code>, emits <code>pipeline-context</code> JSON with detected languages and versions.</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-check-double text-blue-400 mt-1"></i><div><strong><code>lint</code> + <code>test</code></strong> — receive <code>pipeline-context</code>, conditionally install the right toolchains, run linters and test suites.</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-trash-can text-slate-400 mt-1"></i><div><strong><code>janitor</code></strong> — frees 10–15 GB of unused pre-installed toolchains on the runner before the container build.</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-box text-green-400 mt-1"></i><div><strong><code>octopilot</code></strong> — builds and pushes multi-arch container images, outputs <code>build_result.json</code> with digests for SLSA attestation.</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-code-branch text-violet-400 mt-1"></i><div><strong><code>bump-version</code> + <code>is-tag</code> + <code>previous-tag</code> + <code>release</code></strong> — automate the full release: version bump → tag → AI-generated changelog → GitHub Release.</div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">A Complete Pipeline in Under 60 Lines</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Here is the complete CI pipeline for a Rust + static site repository using the Octopilot action library. This replaces roughly 200 lines of hand-rolled YAML.
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      pipeline-context: \${{ steps.detect.outputs.pipeline-context }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: detect
+        uses: octopilot/actions/detect-contexts@main
+
+  lint:
+    needs: detect
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: octopilot/actions/lint@main
+        with:
+          pipeline-context: \${{ needs.detect.outputs.pipeline-context }}
+
+  test:
+    needs: detect
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: octopilot/actions/test@main
+        with:
+          pipeline-context: \${{ needs.detect.outputs.pipeline-context }}
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: octopilot/actions/janitor@main
+        with:
+          pipeline-context: \${{ needs.detect.outputs.pipeline-context }}
+      - uses: octopilot/actions/octopilot@main
+        with:
+          registry: ghcr.io
+          username: \${{ github.actor }}
+          password: \${{ secrets.GITHUB_TOKEN }}
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mt-6">
+                    The rest of this series dives into each layer: <a href="/blog/zero-config-ci-detect-contexts" class="text-blue-400 hover:text-blue-300">how <code>detect-contexts</code> works</a>, <a href="/blog/lint-test-without-scaffolding" class="text-blue-400 hover:text-blue-300">lint and test without boilerplate</a>, <a href="/blog/multi-arch-containers-op-action" class="text-blue-400 hover:text-blue-300">multi-arch container builds</a>, and <a href="/blog/automated-release-workflow" class="text-blue-400 hover:text-blue-300">fully automated releases</a>.
+                </p>
+            </section>
+        `
+    },
+    {
+        id: '11',
+        title: 'Zero-Config CI: How skaffold.yaml Drives Your Entire Pipeline',
+        excerpt: 'Most CI pipelines repeat the same configuration that already exists in your build files. The detect-contexts action reads your skaffold.yaml once and emits a pipeline-context JSON contract that every downstream action uses—no duplicated configuration.',
+        category: 'Developer',
+        readTime: '9 min read',
+        image: '/assets/blog/detect-contexts.png',
+        author: {
+            name: 'Sam Patel',
+            role: 'DevOps Engineer',
+            avatar: '/assets/blog/avatar-sam.jpg'
+        },
+        slug: 'zero-config-ci-detect-contexts',
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Every GitHub Actions workflow for a Go project looks roughly the same: checkout, setup-go with a hardcoded version, cache the module cache, run golangci-lint. The version in the workflow is usually out of sync with the version in <code>go.mod</code>. The same version is also specified in the Dockerfile. And again in the <code>skaffold.yaml</code> build stanza. Three places, three chances for drift.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        <code>detect-contexts</code> parses your <code>skaffold.yaml</code> once and produces a <strong>pipeline-context JSON contract</strong>. Every other Octopilot action reads this contract to know which toolchains to install, which versions to use, and which test commands to run — with no manual configuration.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Configuration Duplication Problem</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    In a typical multi-language repository — say, a Rust API backend with a Node.js frontend — you'll find the Go or Rust toolchain version specified in at least four places: the language manifest (<code>Cargo.toml</code>, <code>go.mod</code>), the Dockerfile, the <code>skaffold.yaml</code>, and each GitHub Actions workflow file. When you upgrade Rust from 1.83 to 1.84, you update three of them, forget the fourth, and the CI fails on Monday morning.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Common duplication points</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-copy text-amber-400 mt-1"></i><div><code>skaffold.yaml</code> — <code>builder: rust:1.83</code> in the buildpack stanza</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-copy text-amber-400 mt-1"></i><div><code>.github/workflows/ci.yml</code> — <code>toolchain: 1.83</code> in <code>dtolnay/rust-toolchain</code></div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-copy text-amber-400 mt-1"></i><div><code>Dockerfile</code> — <code>FROM rust:1.83-alpine</code></div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-copy text-amber-400 mt-1"></i><div><code>rust-toolchain.toml</code> — the canonical source that all the above should derive from</div></li>
+                    </ul>
+                </div>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The deeper issue is that your CI workflow has no awareness of what the project actually needs. It specifies toolchain versions by convention, not by reading the project's own declarations. <code>skaffold.yaml</code> already knows — it drives your build. <code>detect-contexts</code> makes that knowledge available to CI.
+                </p>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The pipeline-context Contract</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    <code>detect-contexts</code> reads your <code>skaffold.yaml</code> and emits a JSON object that captures everything the rest of the pipeline needs to know:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+{
+  "languages": ["rust", "node"],
+  "rust": { "version": "1.84" },
+  "node": { "version": "22" },
+  "contexts": [
+    { "language": "rust", "version": "1.84",
+      "context": "api/", "command": "cargo test" },
+    { "language": "node", "version": "22",
+      "context": "site/", "command": "npm test" }
+  ]
+}
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    This is passed as a single JSON string via job outputs. Each subsequent action (<code>lint</code>, <code>test</code>, <code>janitor</code>) reads it and behaves accordingly — installing Rust toolchain <em>only if</em> <code>languages</code> includes <code>"rust"</code>, using the exact version the project declares.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">What gets detected automatically</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-check text-green-400 mt-1"></i><div><strong>Language:</strong> Go, Rust, Node.js, Python, Java (from buildpack IDs or Dockerfile FROM)</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-check text-green-400 mt-1"></i><div><strong>Version:</strong> Extracted from the builder image tag or runtime config stanza</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-check text-green-400 mt-1"></i><div><strong>Build context:</strong> The directory path for each artifact</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-check text-green-400 mt-1"></i><div><strong>Test command:</strong> Sensible defaults per language, overridable in <code>skaffold.yaml</code> custom stanza</div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Wiring It Into Your Pipeline</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The <code>detect</code> job runs first and exposes <code>pipeline-context</code> as a job output. Every downstream job declares it as a <code>needs</code> dependency and passes it through:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      pipeline-context: \${{ steps.detect.outputs.pipeline-context }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: detect
+        uses: octopilot/actions/detect-contexts@main
+        # Optional: override skaffold file location
+        with:
+          skaffold-file: config/skaffold.yaml
+
+  lint:
+    needs: detect
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: octopilot/actions/lint@main
+        with:
+          pipeline-context: \${{ needs.detect.outputs.pipeline-context }}
+          # lint will install Rust, Node, Go, Python exactly as detected
+          # no further configuration required
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mt-6">
+                    Because the contract is plain JSON passed as a string, it flows freely across job boundaries — GitHub Actions outputs are strings, so the JSON is serialised on output and deserialised inside each consuming action using <code>jq</code>. This also makes the pipeline observable: you can inspect the contract in the <code>detect</code> job's step summary and immediately see what the pipeline will do.
+                </p>
+                <div class="p-6 bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-lg mt-8">
+                    <h4 class="text-white font-bold mb-2">Single source of truth</h4>
+                    <p class="text-gray-300">
+                        When you add a new service in a new language to <code>skaffold.yaml</code>, the next CI run will automatically install the right toolchain, lint it, test it, and build it. No workflow changes required.
+                    </p>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '12',
+        title: 'Lint and Test Without the Scaffolding: Multi-Language CI in One Action',
+        excerpt: 'Setting up golangci-lint, Clippy, Ruff, and Jest in CI requires dozens of lines of version-pinned YAML per language. The Octopilot lint and test actions absorb all of that boilerplate and free 10–15 GB of runner disk as a bonus.',
+        category: 'Developer',
+        readTime: '10 min read',
+        image: '/assets/blog/lint-test-actions.png',
+        author: {
+            name: 'Chris Anderson',
+            role: 'Platform Engineer',
+            avatar: '/assets/blog/avatar-chris.jpg'
+        },
+        slug: 'lint-test-without-scaffolding',
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    A Go project's lint job in GitHub Actions is approximately 25 lines of YAML when done properly: checkout, setup-go with exact version, module cache restoration, golangci-lint installation (pinned to a compatible version), and the lint invocation with timeout flags. A Rust project adds another 20 lines for <code>dtolnay/rust-toolchain</code>, Clippy flags, and <code>rustfmt</code>. Multiply this across ten repositories and you are maintaining hundreds of lines of near-identical YAML — all of which drifts independently.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        The <code>lint</code> and <code>test</code> actions accept a single <code>pipeline-context</code> JSON input and handle the rest: toolchain installation, linter configuration, test execution, and disk cleanup — across Go, Rust, Node.js, Python, and Java.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Boilerplate Maintenance Problem</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The canonical golangci-lint GitHub Actions setup requires a specific installation method that matches your project's Go version. If you install the pre-built binary (the default) but your project uses Go 1.25 and golangci-lint was compiled with Go 1.24, you get:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+Error: can't load config: the Go language version (go1.24) used to
+build golangci-lint is lower than the targeted Go version (1.25.6)
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The fix is non-obvious: you need <code>install-mode: goinstall</code> to compile golangci-lint from source using your project's Go toolchain. This is a footgun that everyone hits once and then has to remember to apply everywhere. Similarly, disk space exhaustion is a recurring CI failure for any repository that builds Docker images — the pre-installed Android SDK, .NET Core, and Haskell toolchains on <code>ubuntu-latest</code> consume over 15 GB of the runner's 14 GB usable disk.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Common failure modes</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-xmark text-red-400 mt-1"></i><div><strong>Go version mismatch:</strong> golangci-lint built with Go N-1 fails against projects using Go N</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-xmark text-red-400 mt-1"></i><div><strong>Timeout defaults:</strong> golangci-lint's default 1-minute timeout fails on large codebases</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-xmark text-red-400 mt-1"></i><div><strong>No space left on device:</strong> Pre-installed toolchains exhaust runner disk before the Docker build begins</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-xmark text-red-400 mt-1"></i><div><strong>Language drift:</strong> Adding a new language to the project requires manual workflow edits across all repos</div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Conditional Toolchains and the Janitor</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The <code>lint</code> and <code>test</code> composite actions each begin with a "Parse context" step that extracts detected languages from <code>pipeline-context</code> into step outputs using <code>jq</code>. Subsequent toolchain setup steps are conditional on those outputs:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+# Inside the lint composite action:
+- name: Parse context
+  id: ctx
+  shell: bash
+  run: |
+    echo "has_go=$(echo '\${{ inputs.pipeline-context }}' | \
+      jq -r 'if (.languages | index("go")) then "true" else "false" end')" \
+      >> "\$GITHUB_OUTPUT"
+
+- name: Setup Go
+  if: steps.ctx.outputs.has_go == 'true'
+  uses: actions/setup-go@v5
+  with:
+    go-version: \${{ fromJson(inputs.pipeline-context).go.version }}
+
+- name: Run golangci-lint
+  if: steps.ctx.outputs.has_go == 'true'
+  uses: golangci/golangci-lint-action@v6
+  with:
+    install-mode: goinstall   # compiles from source → no version mismatch
+    args: --timeout=\${{ inputs.lint-timeout || '10m' }}
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The <code>janitor</code> action handles disk cleanup. It accepts the same <code>pipeline-context</code> and removes all pre-installed toolchains that are <em>not</em> needed by the project. A Go project keeps the Go toolchain but removes Android SDK, .NET, Haskell, and Swift — freeing over 12 GB. If no context is provided (common for Docker-only build jobs), all toolchains are removed.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Disk space recovered per language set</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-hard-drive text-green-400 mt-1"></i><div><strong>Go-only project:</strong> ~12 GB freed (Android SDK 9 GB, .NET 2 GB, Haskell 1 GB)</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-hard-drive text-green-400 mt-1"></i><div><strong>Rust-only project:</strong> ~13 GB freed (same removals, Go toolchain also removed)</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-hard-drive text-green-400 mt-1"></i><div><strong>Docker-only job (no context):</strong> ~15 GB freed (everything removed)</div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Using lint, test, and janitor Together</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    A full CI workflow for a multi-language repository using all three actions:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      pipeline-context: \${{ steps.detect.outputs.pipeline-context }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: detect
+        uses: octopilot/actions/detect-contexts@main
+
+  lint:
+    needs: detect
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: octopilot/actions/lint@main
+        with:
+          pipeline-context: \${{ needs.detect.outputs.pipeline-context }}
+          lint-timeout: 15m    # optional; default 10m
+
+  test:
+    needs: detect
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: octopilot/actions/test@main
+        with:
+          pipeline-context: \${{ needs.detect.outputs.pipeline-context }}
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: octopilot/actions/janitor@main
+        with:
+          pipeline-context: \${{ needs.detect.outputs.pipeline-context }}
+          # Removes unused toolchains, leaving ~15 GB for the Docker build
+      - uses: octopilot/actions/octopilot@main
+        with:
+          registry: ghcr.io
+          username: \${{ github.actor }}
+          password: \${{ secrets.GITHUB_TOKEN }}
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mt-6">
+                    <code>lint</code> and <code>test</code> run in parallel, both depending on <code>detect</code>. The <code>build</code> job waits for both to pass, then janitor clears the deck before the heavy Docker work begins. Adding a new language to <code>skaffold.yaml</code> automatically propagates through every layer on the next push.
+                </p>
+            </section>
+        `
+    },
+    {
+        id: '13',
+        title: 'Build Multi-Arch Containers Without the Plumbing: The op Action',
+        excerpt: 'Multi-architecture container builds are deceptively complex: BuildKit wraps single-platform pushes in OCI Indexes, attestation manifests pollute manifest lists, and SLSA provenance requires specific digest handling. The Octopilot op action abstracts all of it.',
+        category: 'Developer',
+        readTime: '11 min read',
+        image: '/assets/blog/op-build-action.png',
+        author: {
+            name: 'Jordan Lee',
+            role: 'Senior DevOps Engineer',
+            avatar: '/assets/blog/avatar-jordan.jpg'
+        },
+        slug: 'multi-arch-containers-op-action',
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Building a container image for <code>linux/amd64</code> is straightforward. Building the same image for <code>linux/amd64</code> and <code>linux/arm64</code> simultaneously, pushing them to a registry as a multi-arch manifest list, generating SLSA build provenance, and outputting the digests for downstream attestation steps — that requires knowing exactly how BuildKit, Docker Buildx, and the OCI Image Specification interact. Most teams learn this by hitting it in production.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        The Octopilot <code>op</code> action wraps the entire build pipeline — Skaffold, Cloud Native Buildpacks, multi-arch manifest assembly, and SLSA attestation — behind a simple interface. It outputs a <code>build_result.json</code> that carries image references and digests as a verifiable contract between CI stages.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The OCI Index Trap</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    When you use <code>docker buildx build --push --platform linux/amd64</code>, you might expect a single image manifest to land in the registry. With modern BuildKit defaults, you get an OCI Index instead — a manifest list that wraps your image manifest together with a provenance attestation manifest. This is BuildKit's default behaviour for provenance generation.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The problem surfaces when you try to assemble a multi-arch manifest list. Tools that attempt to pull the <code>linux/amd64</code> image from the registry encounter an OCI Index and try to find a child image with the requested platform. The provenance attestation manifest is labelled with the host platform, not the target platform, so the lookup fails with:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+no child with platform linux/amd64 in index
+ghcr.io/my-org/my-app:v1.0.0_linux_amd64@sha256:...
+</pre>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">The multi-arch build problem chain</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-arrow-right text-blue-400 mt-1"></i><div>BuildKit adds <code>BUILDX_NO_DEFAULT_ATTESTATIONS</code> workaround — but it must be set per-platform build</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-arrow-right text-blue-400 mt-1"></i><div>Manifest list assembly must skip attestation manifests when reading per-platform images from the registry</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-arrow-right text-blue-400 mt-1"></i><div>SLSA attestation requires the final manifest list digest, not the per-platform digest</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-arrow-right text-blue-400 mt-1"></i><div>Digest extraction for attestation must target the correct artifact (the app image, not the base image)</div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">build_result.json: The CI Contract</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The <code>op</code> action's primary output is <code>build_result.json</code> — a machine-readable file that records every built artifact with its full registry reference and digest:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+{
+  "builds": [
+    {
+      "imageName": "op-base",
+      "tag": "ghcr.io/octopilot/op-base:v1.0.0@sha256:abc123..."
+    },
+    {
+      "imageName": "op",
+      "tag": "ghcr.io/octopilot/op:v1.0.0@sha256:def456..."
+    }
+  ]
+}
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Downstream steps — SLSA attestation, Flux image automation, deployment promotion — consume this file rather than trying to reconstruct the digest from registry lookups. This makes the pipeline reproducible: the same <code>build_result.json</code> that was produced during CI is what gets attested and deployed.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Container mode vs bypass mode</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-box text-green-400 mt-1"></i><div><strong>Container mode (default):</strong> Runs <code>op</code> inside the <code>ghcr.io/octopilot/op</code> container. Docker socket and credentials are mounted in. Used in all production pipelines.</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-bolt text-amber-400 mt-1"></i><div><strong>Bypass mode:</strong> Uses the GitHub Actions runner's own Docker daemon directly (no container wrapper). Faster for self-hosted runners where the <code>op</code> binary is already installed.</div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Using the op Action With SLSA Attestation</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    A complete build and attestation step using the Octopilot action:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+    - name: Build and Push
+      id: build
+      uses: octopilot/actions/octopilot@main
+      with:
+        registry: ghcr.io
+        username: \${{ github.actor }}
+        password: \${{ secrets.GITHUB_TOKEN }}
+        push: true
+        platforms: linux/amd64,linux/arm64
+
+    - name: Extract digest for attestation
+      id: digest
+      run: |
+        # Select the application image (not the base) from build_result.json
+        IMAGE_TAG=$(cat build_result.json | \
+          jq -r '.builds[] | select(.imageName == "op") | .tag')
+        DIGEST=\${{ "sha256:" }}$(echo "$IMAGE_TAG" | cut -d@ -f2 | cut -d: -f2)
+        echo "digest=$DIGEST" >> \$GITHUB_OUTPUT
+
+    - name: Attest build provenance
+      uses: actions/attest-build-provenance@v2
+      with:
+        subject-name: ghcr.io/\${{ github.repository_owner }}/op
+        subject-digest: \${{ steps.digest.outputs.digest }}
+        push-to-registry: true
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mt-6">
+                    The key detail is the <code>jq</code> selector: <code>.builds[] | select(.imageName == "op")</code>. In a pipeline that builds both a base image and an application image, you need the application image's digest for attestation — not the first artifact in the list. <code>build_result.json</code> makes this unambiguous.
+                </p>
+            </section>
+        `
+    },
+    {
+        id: '14',
+        title: 'From Merge to Tag to Release Notes in One Workflow',
+        excerpt: 'Manual version bumps are error-prone, inconsistently applied, and always blocked on someone remembering to do them. The Octopilot release actions automate the full lifecycle: version bump, commit, tag, AI-generated changelog, GitHub Release.',
+        category: 'Team',
+        readTime: '10 min read',
+        image: '/assets/blog/automated-releases.png',
+        author: {
+            name: 'Maya Johnson',
+            role: 'Team Lead',
+            avatar: '/assets/blog/avatar-maya.jpg'
+        },
+        slug: 'automated-release-workflow',
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The pattern is familiar: the feature is done, tests pass, PR is merged. Then someone needs to manually update the version in <code>Cargo.toml</code> or <code>package.json</code>, create a git tag, push it, write release notes by trawling through commit messages, and publish the GitHub Release. It's routine enough to feel automatable but fiddly enough that teams often skip it — or do it inconsistently across repositories.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        Four actions — <code>bump-version</code>, <code>is-tag</code>, <code>previous-tag</code>, and <code>release</code> — compose into a fully automated release workflow. A team member triggers <code>workflow_dispatch</code>, selects major/minor/patch, and the pipeline does the rest.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Why Manual Releases Break</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The hidden cost of manual releases isn't the time spent — it's the inconsistency. Some repositories tag <code>v1.2.3</code>, others <code>1.2.3</code>. Some update <code>Cargo.toml</code>, others update a <code>version.go</code> file, others update neither and just push a tag. Release notes are either missing, terse, or copy-pasted from a previous release.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">A critical gotcha: GITHUB_TOKEN cannot trigger downstream CI</h3>
+                    <p class="text-gray-300 mb-4">
+                        The most common failure when first automating releases: your release workflow commits the version bump, pushes the tag, and... the CI pipeline for that tag never runs. GitHub intentionally prevents <code>GITHUB_TOKEN</code>-authenticated pushes from triggering new workflow runs to avoid infinite loops.
+                    </p>
+                    <p class="text-gray-300">
+                        The fix is a Personal Access Token (PAT) or a GitHub App installation token stored as <code>REPO_PAT</code>. This single secret is the only manual configuration required for the release workflow to function end-to-end.
+                    </p>
+                </div>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Four Release Actions</h2>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">How they compose</h3>
+                    <ul class="space-y-4 text-gray-300">
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-code-branch text-violet-400 mt-1"></i>
+                            <div>
+                                <strong><code>bump-version</code></strong> — reads the current version from the target file, applies major/minor/patch semantics, writes the new version back, and outputs both the old and new version strings. Supports <code>go</code>, <code>rust</code>, <code>node</code>, <code>python</code>, <code>maven</code>, <code>gradle</code>, <code>dotnet</code>, and plain <code>text</code>.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i>
+                            <div>
+                                <strong><code>is-tag</code></strong> — checks <code>GITHUB_REF</code> and falls back to <code>git describe --exact-match</code>. Used as a gate to ensure release steps only run on tagged commits, not on branch pushes.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-tag text-slate-400 mt-1"></i>
+                            <div>
+                                <strong><code>previous-tag</code></strong> — handles shallow clones, skips the current tag, and returns a configurable fallback (e.g. <code>v0.0.0</code>) if no prior tag exists. Used to compute the commit range for changelog generation.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-rocket text-blue-400 mt-1"></i>
+                            <div>
+                                <strong><code>release</code></strong> — takes the version, since-tag, and provider (anthropic/openai/ollama) and creates the GitHub Release with AI-generated release notes summarising the changes since the previous tag.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Complete Release Workflow</h2>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: \${{ secrets.REPO_PAT }}   # PAT required to trigger CI on push
+          fetch-depth: 0                     # full history for tag lookup
+
+      - name: Bump version
+        id: bump
+        uses: octopilot/actions/bump-version@main
+        with:
+          mode: rust                 # or: go, node, python, maven, gradle
+          bump: \${{ inputs.bump }}
+          file: api/Cargo.toml
+
+      - name: Commit and tag
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add api/Cargo.toml
+          git commit -m "chore: bump version to v\${{ steps.bump.outputs.version }}"
+          git tag "v\${{ steps.bump.outputs.version }}"
+          git push origin HEAD "v\${{ steps.bump.outputs.version }}"
+        env:
+          GH_TOKEN: \${{ secrets.REPO_PAT }}
+
+      - name: Get previous tag
+        id: prev_tag
+        uses: octopilot/actions/previous-tag@main
+        with:
+          fallback: "v0.0.0"
+
+      - name: Create GitHub Release
+        uses: octopilot/actions/release@main
+        with:
+          version: "v\${{ steps.bump.outputs.version }}"
+          since_tag: \${{ steps.prev_tag.outputs.tag }}
+          provider: anthropic
+        env:
+          ANTHROPIC_API_KEY: \${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mt-6">
+                    The workflow runs in under two minutes. The result: a versioned commit, a git tag, a GitHub Release with AI-summarised release notes, and — because the push uses <code>REPO_PAT</code> — the full CI pipeline triggered on the new tag, building and attesting the release container image.
+                </p>
+                <div class="p-6 bg-amber-500/10 border-l-4 border-amber-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">Multiple version files</h4>
+                    <p class="text-gray-300">
+                        For monorepos with multiple version files, call <code>bump-version</code> once per file. The action handles one file at a time — call it for <code>api/Cargo.toml</code>, then again for <code>frontend/package.json</code>, using the same <code>bump</code> input each time.
+                    </p>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '15',
+        title: 'Ephemeral Environments for Every PR: No Infrastructure Required',
+        excerpt: 'Long-lived review environments are expensive, drift from main, and become security liabilities. ttl.sh gives you a free, unauthenticated, time-limited container registry. Combined with build-ephemeral, every pull request can have its own container image that expires automatically.',
+        category: 'Team',
+        readTime: '8 min read',
+        image: '/assets/blog/ephemeral-environments.png',
+        author: {
+            name: 'Alex Rivera',
+            role: 'Solo Dev Advocate',
+            avatar: '/assets/blog/avatar-alex.jpg'
+        },
+        slug: 'ephemeral-environments-pr',
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Pull request review environments — sometimes called preview environments or ephemeral environments — are a powerful development practice. Instead of reviewing code by reading it in a browser, reviewers can interact with a running instance of exactly the change being proposed. The blocker is usually infrastructure: standing up a review environment requires a registry, a cluster, an ingress, TLS, DNS, and a cleanup mechanism for when the PR closes.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        <code>ttl.sh</code> is a free, public OCI registry where images expire after a configurable time-to-live. The <code>build-ephemeral</code> action wraps the full <code>op build</code> flow targeting this registry, giving every PR a real container image with zero registry setup and zero cleanup overhead.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Review Environment Tax</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Most teams that want ephemeral environments end up with one of two outcomes: they invest heavily in a full preview environment platform (a real engineering project in itself), or they give up and review code without running it. The middle ground — "just build a container and push it somewhere for testing" — is surprisingly hard to operationalise.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Why "just push to a staging registry" fails</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-xmark text-red-400 mt-1"></i><div><strong>Registry auth:</strong> You need to store and rotate credentials for the staging registry in every repo's secrets</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-xmark text-red-400 mt-1"></i><div><strong>Tag collisions:</strong> PR #42 and PR #43 both push <code>:pr-latest</code>, overwriting each other</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-xmark text-red-400 mt-1"></i><div><strong>Cleanup:</strong> Old PR images accumulate; registry storage costs grow; someone has to write and maintain a pruning job</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-xmark text-red-400 mt-1"></i><div><strong>GHCR permissions:</strong> Pushing to <code>ghcr.io</code> from a fork's PR requires careful permissions configuration and may not be possible at all</div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">ttl.sh: A Registry That Deletes Itself</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    <a href="https://ttl.sh" class="text-blue-400 hover:text-blue-300">ttl.sh</a> is an anonymous, ephemeral container registry. You push an image with a time-to-live as the tag (<code>:2h</code>, <code>:1d</code>, <code>:24h</code>) and it expires automatically. No account. No credentials. No cleanup. The image reference is unique per push — it includes the content digest — so PR #42 and PR #43 each get distinct, non-colliding references.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The <code>build-ephemeral</code> action generates an image name from the repository owner, repository name, and short SHA, runs <code>op build</code> targeting that name on <code>ttl.sh</code>, and outputs the full reference:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+# Resulting image reference:
+ttl.sh/octopilot-sample-static-rust-axum-a3f91c2:4h
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Reviewers can pull and run this image immediately with no registry login. After 4 hours it disappears automatically.
+                </p>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">PR Preview Workflow</h2>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+name: PR Preview
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write   # to post the comment
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build ephemeral image
+        id: ephemeral
+        uses: octopilot/actions/build-ephemeral@main
+        with:
+          ttl: "4h"
+          platform: linux/amd64   # single-arch for speed
+
+      - name: Comment image ref on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: [
+                "### Preview Image Ready",
+                "",
+                "Pull and run the image for this PR:",
+                "\`\`\`",
+                "docker run --rm -p 8080:8080 \${{ steps.ephemeral.outputs.image_ref }}",
+                "\`\`\`",
+                "_This image expires in 4 hours._"
+              ].join("\\n")
+            });
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mt-6">
+                    The result: every PR automatically gets a comment with a <code>docker run</code> command that any reviewer can use to test the change in under 30 seconds. No cluster, no ingress, no DNS — just a container they can run locally. When the PR closes, the image has already expired.
+                </p>
+                <div class="p-6 bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">Integration testing</h4>
+                    <p class="text-gray-300">
+                        The same pattern works for integration tests. Use <code>build-ephemeral</code> in a test job, pull the image in a subsequent job, and run your integration test suite against the actual container image — not a mocked service.
+                    </p>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '16',
+        title: 'Network Security for Cloud-Hosted Runners: Allowlisting GitHub Actions',
+        excerpt: 'GitHub-hosted runners use ephemeral IP addresses that change on every job run. If your cloud databases, registries, or Kubernetes API servers are behind IP allowlists, you need a way to add the runner IP before the job and remove it after — automatically, and even on failure.',
+        category: 'Enterprise',
+        readTime: '9 min read',
+        image: '/assets/blog/network-security-runners.png',
+        author: {
+            name: 'Rachel Thompson',
+            role: 'Security Architect',
+            avatar: '/assets/blog/avatar-rachel.jpg'
+        },
+        slug: 'network-security-cloud-runners',
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Enterprise cloud environments protect sensitive resources with firewall IP allowlists. Cloud SQL on GCP, RDS on AWS, and private AKS clusters on Azure all support restricting access to specific CIDR ranges. This is sound security practice — until your CI/CD pipeline runs on GitHub-hosted runners, which use a pool of ephemeral IP addresses that GitHub publishes and rotates regularly.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        The <code>gke-allow-runner</code>, <code>eks-allow-runner</code>, and <code>aks-allow-runner</code> actions implement a pre-step / post-step allowlisting pattern. The runner's IP is added to the firewall before the job and removed in a step marked <code>if: always()</code> — so the IP is cleaned up even if the job fails or is cancelled.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Ephemeral IP Problem</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    GitHub publishes a <a href="https://api.github.com/meta" class="text-blue-400 hover:text-blue-300">meta API endpoint</a> listing the current IP ranges used by GitHub Actions runners. These ranges include thousands of CIDR blocks across AWS, Azure, and GCP regions. Allowlisting the entire published range defeats the purpose of the allowlist — you're effectively opening your database to all of GitHub's cloud infrastructure.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The correct approach is narrower: determine the specific IP of the runner executing the current job, add <em>just that IP</em> to the firewall allowlist at job start, and remove it at job end. The challenge is the cleanup step — if you put the removal in a final step, a job failure or cancellation will skip it, leaving the IP permanently allowlisted.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">The always() pattern</h3>
+                    <p class="text-gray-300 mb-4">
+                        GitHub Actions supports <code>if: always()</code> on steps, which causes the step to run regardless of whether previous steps succeeded, failed, or were cancelled. This is the correct mechanism for cleanup in a firewall allowlisting workflow.
+                    </p>
+                    <p class="text-gray-300">
+                        All three allow-runner actions (GKE, EKS, AKS) follow the same pattern: an <strong>Add Whitelist</strong> step at the start (no condition) and a <strong>Remove Whitelist</strong> step at the end with <code>if: always()</code>.
+                    </p>
+                </div>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Cloud-Specific Implementations</h2>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">GKE (Google Kubernetes Engine)</h3>
+                    <p class="text-gray-300 mb-4">
+                        <code>gke-allow-runner</code> uses the Google Cloud SDK to add/remove the runner IP from the GKE cluster's master authorised networks. Requires <code>gcloud auth</code> with a service account that has <code>container.clusters.update</code> permission or equivalent Workload Identity Federation credentials.
+                    </p>
+                </div>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">EKS (Amazon Elastic Kubernetes Service)</h3>
+                    <p class="text-gray-300 mb-4">
+                        <code>eks-allow-runner</code> modifies the EKS cluster's public endpoint access security group using the AWS CLI. Requires an IAM role with <code>eks:UpdateClusterConfig</code> and the relevant EC2 security group mutation permissions via OIDC-based role assumption.
+                    </p>
+                </div>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">AKS (Azure Kubernetes Service)</h3>
+                    <p class="text-gray-300 mb-4">
+                        <code>aks-allow-runner</code> updates the AKS cluster's API server authorised IP ranges using the Azure CLI. Requires an Azure service principal or Managed Identity with <code>Microsoft.ContainerService/managedClusters/write</code> permission on the cluster resource.
+                    </p>
+                </div>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Usage Pattern (GKE Example)</h2>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # required for Workload Identity Federation
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: \${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: \${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Add runner to GKE allowlist
+        uses: octopilot/actions/network-access/gke-allow-runner@main
+        with:
+          project_id: my-gcp-project
+          cluster_name: my-cluster
+          cluster_region: europe-west2
+
+      # ... deployment steps that require cluster access ...
+
+      - name: Deploy to GKE
+        run: kubectl apply -f k8s/
+
+      - name: Remove runner from GKE allowlist
+        if: always()    # runs even on failure or cancellation
+        uses: octopilot/actions/network-access/gke-allow-runner@main
+        with:
+          project_id: my-gcp-project
+          cluster_name: my-cluster
+          cluster_region: europe-west2
+          remove: true
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mt-6">
+                    The <code>if: always()</code> on the removal step is critical. Without it, a failed <code>kubectl apply</code> would leave the runner's IP in the allowlist until the next successful run, creating an open network path that persists indefinitely.
+                </p>
+                <div class="p-6 bg-amber-500/10 border-l-4 border-amber-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">Self-hosted runners</h4>
+                    <p class="text-gray-300">
+                        If you run self-hosted runners with static IPs, you don't need these actions — configure the allowlist once at infrastructure provisioning time. These actions are specifically for GitHub-hosted runners where the IP is unknown until the job starts.
+                    </p>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '17',
+        title: 'Composable CI/CD: Why We Replaced Reusable Workflows with Composite Actions',
+        excerpt: 'Reusable workflows solved the copy-paste problem but introduced new friction: extra job spin-up time, separate workflow runs, and expression syntax limitations. Composite actions give you the same reusability inside a single job — and taught us some hard lessons about GitHub Actions expression evaluation.',
+        category: 'Team',
+        readTime: '12 min read',
+        image: '/assets/blog/composable-cicd.png',
+        author: {
+            name: 'Lisa Martinez',
+            role: 'SRE Lead',
+            avatar: '/assets/blog/avatar-lisa.jpg'
+        },
+        slug: 'composable-cicd-composite-actions',
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    GitHub Actions' reusable workflows were a significant improvement over copy-paste CI. Instead of duplicating a 50-line lint workflow across fifteen repositories, you define it once in a central repository and call it with <code>uses: octopilot/octopilot-workflows/.github/workflows/lint.yml@main</code>. When you fix a golangci-lint timeout, every repository that uses the workflow gets the fix automatically.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        Composite actions run inside the calling job — same runner, same filesystem, same environment. They're faster than reusable workflows, compose more naturally with other steps, and enable the <code>pipeline-context</code> pattern that drives the Octopilot pipeline. The migration taught us where GitHub Actions expression evaluation breaks down and how to work around it.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">What Reusable Workflows Got Wrong</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Reusable workflows are jobs. Each <code>workflow_call</code> creates a new GitHub Actions job that needs its own runner, its own checkout, and its own environment setup. For a lint workflow, that's typically 30–60 seconds of job spin-up time before any linting actually happens. For a pipeline with separate lint and test reusable workflows called in parallel, you're paying that cost twice.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Reusable workflow limitations</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div><strong>Separate job:</strong> Checkout, restore caches, set up environment — all paid again for every reusable workflow invocation</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div><strong>Output propagation:</strong> Passing data from a reusable workflow to the calling workflow requires threading outputs through job output mappings</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div><strong>Visibility:</strong> Reusable workflow steps appear in a nested workflow run, not inline in the calling workflow — harder to debug</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div><strong>Expression limits:</strong> Inputs passed to reusable workflows are strings; complex objects must be serialised to JSON and passed as strings</div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Composite Actions: Same Job, Same Filesystem</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Composite actions run as steps inside the calling job. The runner is already provisioned, the repository is already checked out, the caches are already warm. A composite action is closer to a function call than a separate process. The <code>lint</code> composite action installs golangci-lint and runs it in about 45 seconds; the equivalent reusable workflow takes over two minutes including job startup.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The <code>pipeline-context</code> pattern is only practical with composite actions. Passing a JSON object from a <code>detect-contexts</code> step to a <code>lint</code> step in the same job is a simple step output reference: <code>\${{ steps.detect.outputs.pipeline-context }}</code>. With reusable workflows, that context would need to traverse two job output mappings and two workflow input declarations.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">A hard-learned lesson: fromJson() in composite action if: conditions</h3>
+                    <p class="text-gray-300 mb-4">
+                        The first version of the <code>lint</code> composite action used <code>fromJson()</code> in step <code>if:</code> conditions to check whether the detected languages included Go:
+                    </p>
+                    <pre class="bg-black/50 border border-slate-800 rounded-lg p-3 font-mono text-xs overflow-x-auto text-gray-300 mb-4">
+# This does NOT work in composite action if: conditions
+if: fromJson(inputs.pipeline-context).languages contains 'go'
+                    </pre>
+                    <p class="text-gray-300 mb-4">
+                        GitHub Actions validates composite action YAML at load time, before any inputs are available, and <code>fromJson()</code> is not allowed in this context. The error is:
+                    </p>
+                    <pre class="bg-black/50 border border-slate-800 rounded-lg p-3 font-mono text-xs overflow-x-auto text-gray-300 mb-4">
+A template expression is not allowed in this context
+                    </pre>
+                    <p class="text-gray-300">
+                        The fix: add a dedicated "Parse context" step that uses <code>jq</code> to extract the relevant fields into step outputs. Subsequent steps reference those outputs, which are plain strings and are perfectly legal in <code>if:</code> conditions.
+                    </p>
+                </div>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Parse Context Pattern</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    This pattern appears in every Octopilot composite action that consumes <code>pipeline-context</code>:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+steps:
+  # Step 1: extract what we need into plain string outputs
+  - name: Parse context
+    id: ctx
+    shell: bash
+    run: |
+      PC='\${{ inputs.pipeline-context }}'
+      has_go=$(echo "$PC" | jq -r 'if (.languages | index("go")) then "true" else "false" end')
+      has_rust=$(echo "$PC" | jq -r 'if (.languages | index("rust")) then "true" else "false" end')
+      go_version=$(echo "$PC" | jq -r '.go.version // ""')
+      echo "has_go=$has_go"       >> "\$GITHUB_OUTPUT"
+      echo "has_rust=$has_rust"   >> "\$GITHUB_OUTPUT"
+      echo "go_version=$go_version" >> "\$GITHUB_OUTPUT"
+
+  # Step 2: use the plain string outputs in if: conditions (this works)
+  - name: Setup Go
+    if: steps.ctx.outputs.has_go == 'true'
+    uses: actions/setup-go@v5
+    with:
+      go-version: \${{ steps.ctx.outputs.go_version }}
+
+  - name: Run golangci-lint
+    if: steps.ctx.outputs.has_go == 'true'
+    uses: golangci/golangci-lint-action@v6
+    with:
+      install-mode: goinstall
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mt-6">
+                    The separation between "parse" and "act" keeps the composite action readable and avoids the expression evaluation trap. Each language adds two lines to the parse step and a pair of conditional setup/run steps — the pattern scales cleanly.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mt-6">
+                    We kept the original reusable workflows in <code>octopilot-workflows</code> as thin wrappers that call the composite actions for backwards compatibility. Teams already using the reusable workflow interface don't need to change anything; those adopting the new pipeline get the composite actions directly and benefit from faster feedback cycles and inline step visibility.
+                </p>
+                <div class="p-6 bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-lg mt-8">
+                    <h4 class="text-white font-bold mb-2">When to still use reusable workflows</h4>
+                    <p class="text-gray-300">
+                        Reusable workflows are the right choice when you need <strong>job-level isolation</strong> — separate permissions, separate environment, separate secret access. The Octopilot build job (which requires <code>packages: write</code> and <code>id-token: write</code>) is a reusable workflow, not a composite action, precisely for this reason.
+                    </p>
                 </div>
             </section>
         `

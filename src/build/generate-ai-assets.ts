@@ -9,6 +9,7 @@
 
 import type { Plugin } from 'vite';
 import { githubActions } from '../data/github-actions';
+import { blogPosts } from '../data/blog-posts';
 
 // ── actions.json ──────────────────────────────────────────────────────────────
 // Strip rendering-only fields (icon, iconColor, iconBg) so agents get a clean
@@ -144,6 +145,14 @@ function buildSitemapXml(): string {
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>`),
+    // One URL per blog post
+    ...blogPosts.map(p => `
+  <url>
+    <loc>${BASE_URL}/blog/${p.slug}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>`),
   ];
 
