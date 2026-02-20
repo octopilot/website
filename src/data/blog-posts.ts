@@ -1123,9 +1123,9 @@ ghcr.io/my-org/my-app:v1.0.0_linux_amd64@sha256:...
     {
         id: '14',
         title: 'From Merge to Tag to Release Notes in One Workflow',
-        excerpt: 'Manual version bumps are error-prone, inconsistently applied, and always blocked on someone remembering to do them. The Octopilot release actions automate the full lifecycle: version bump, commit, tag, AI-generated changelog, GitHub Release.',
+        excerpt: 'Release-Please, semantic-release, and their relatives are bloated, opinionated, and surprisingly fragile. We built our own release tooling from dissatisfaction — four composable actions that version-bump, tag, and generate AI-written release notes in under two minutes.',
         category: 'Team',
-        readTime: '10 min read',
+        readTime: '11 min read',
         image: '/assets/blog/automated-releases.png',
         author: {
             name: 'Maya Johnson',
@@ -1137,63 +1137,109 @@ ghcr.io/my-org/my-app:v1.0.0_linux_amd64@sha256:...
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
-                    The pattern is familiar: the feature is done, tests pass, PR is merged. Then someone needs to manually update the version in <code>Cargo.toml</code> or <code>package.json</code>, create a git tag, push it, write release notes by trawling through commit messages, and publish the GitHub Release. It's routine enough to feel automatable but fiddly enough that teams often skip it — or do it inconsistently across repositories.
+                    Every engineering team eventually reaches for an automated release tool. The usual candidates are Google's <strong>Release-Please</strong>, <strong>semantic-release</strong>, or <strong>changesets</strong>. We tried them. We found them all — to varying degrees — to be bloated, opinionated far beyond what the problem requires, and surprisingly fragile in practice.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Release-Please, in particular, manages its own release PR lifecycle, enforces Conventional Commits across your entire history, requires a specific branch strategy, and — when something goes wrong — leaves behind "release PRs" that drift out of sync with reality and require manual cleanup. For a team that just wants to bump a version, push a tag, and publish release notes, it is a significant amount of machinery to operate.
                 </p>
                 <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
                     <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
                     <p class="text-gray-300">
-                        Four actions — <code>bump-version</code>, <code>is-tag</code>, <code>previous-tag</code>, and <code>release</code> — compose into a fully automated release workflow. A team member triggers <code>workflow_dispatch</code>, selects major/minor/patch, and the pipeline does the rest.
+                        We built four composable actions — <code>bump-version</code>, <code>is-tag</code>, <code>previous-tag</code>, and <code>release</code> — that do exactly what the problem requires and nothing more. A team member triggers <code>workflow_dispatch</code>, picks major/minor/patch, and the pipeline does the rest in under two minutes.
                     </p>
                 </div>
             </section>
 
             <section id="problem" class="mb-12">
-                <h2 class="text-3xl font-bold text-white mb-6">Why Manual Releases Break</h2>
+                <h2 class="text-3xl font-bold text-white mb-6">What's Wrong With Release-Please</h2>
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
-                    The hidden cost of manual releases isn't the time spent — it's the inconsistency. Some repositories tag <code>v1.2.3</code>, others <code>1.2.3</code>. Some update <code>Cargo.toml</code>, others update a <code>version.go</code> file, others update neither and just push a tag. Release notes are either missing, terse, or copy-pasted from a previous release.
+                    Release-Please is not a bad idea. Automated versioning driven by commit message conventions is a reasonable model. The problems are in the implementation: it is a GitHub App (or a GitHub Action wrapping a Node.js CLI), it requires Conventional Commits throughout your history, and it works by opening and maintaining a "release PR" that accumulates changes until you're ready to merge and release.
                 </p>
                 <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
-                    <h3 class="text-white font-bold text-xl mb-4">A critical gotcha: GITHUB_TOKEN cannot trigger downstream CI</h3>
+                    <h3 class="text-white font-bold text-xl mb-4">The failure modes we encountered</h3>
+                    <ul class="space-y-4 text-gray-300">
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-xmark text-red-400 mt-1"></i>
+                            <div>
+                                <strong>Release PR drift:</strong> When a release PR falls behind main due to hotfixes or rebase-heavy workflows, it requires manual conflict resolution. The tool doesn't handle this gracefully and leaves orphaned release PRs that confuse newcomers.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-xmark text-red-400 mt-1"></i>
+                            <div>
+                                <strong>Conventional Commits or nothing:</strong> If your team doesn't use <code>feat:</code> / <code>fix:</code> / <code>chore:</code> prefixes consistently, Release-Please cannot determine the bump type. You either enforce a commit convention across the entire organisation or the tool becomes unreliable.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-xmark text-red-400 mt-1"></i>
+                            <div>
+                                <strong>Multi-language friction:</strong> Release-Please handles some ecosystems well (Node, Go) and others inconsistently. A Rust service with a separate frontend package requires careful manifest configuration. Getting it right across a polyglot monorepo is non-trivial.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-xmark text-red-400 mt-1"></i>
+                            <div>
+                                <strong>Opaque release notes:</strong> The auto-generated changelog from Conventional Commits is a raw list of commit subjects. It's technically accurate but rarely tells the story of what changed in terms that users understand.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-xmark text-red-400 mt-1"></i>
+                            <div>
+                                <strong>Hidden state:</strong> Release-Please stores release state in a JSON manifest file and in GitHub release metadata. When things go wrong — and they do — debugging requires understanding this hidden state model.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The fundamental issue is that Release-Please solves a harder problem than most teams actually have. It is designed for continuous delivery pipelines where every merged PR is potentially releasable and the version bump is computed automatically. Most teams want something simpler: a human decides when to release, picks the bump type, and the machine handles the mechanics.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Critical gotcha: GITHUB_TOKEN cannot trigger downstream CI</h3>
                     <p class="text-gray-300 mb-4">
-                        The most common failure when first automating releases: your release workflow commits the version bump, pushes the tag, and... the CI pipeline for that tag never runs. GitHub intentionally prevents <code>GITHUB_TOKEN</code>-authenticated pushes from triggering new workflow runs to avoid infinite loops.
+                        This is a GitHub platform constraint that catches everyone, regardless of which release tool they use. When your release workflow commits the version bump and pushes the tag, the CI pipeline for that tag will never run — GitHub intentionally prevents <code>GITHUB_TOKEN</code>-authenticated pushes from triggering new workflow runs to avoid infinite loops.
                     </p>
                     <p class="text-gray-300">
-                        The fix is a Personal Access Token (PAT) or a GitHub App installation token stored as <code>REPO_PAT</code>. This single secret is the only manual configuration required for the release workflow to function end-to-end.
+                        The fix is a Personal Access Token (PAT) stored as <code>REPO_PAT</code>. This is the only manual configuration required. Release-Please has the same requirement but buries it in documentation that is easy to miss.
                     </p>
                 </div>
             </section>
 
             <section id="solution" class="mb-12">
-                <h2 class="text-3xl font-bold text-white mb-6">The Four Release Actions</h2>
+                <h2 class="text-3xl font-bold text-white mb-6">Four Actions, One Job</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The Octopilot approach is deliberately minimal. There is no release PR, no Conventional Commits requirement, no hidden state file. A human triggers a <code>workflow_dispatch</code> with a single input — the bump type — and four actions run in sequence:
+                </p>
                 <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
-                    <h3 class="text-white font-bold text-xl mb-4">How they compose</h3>
                     <ul class="space-y-4 text-gray-300">
                         <li class="flex gap-3">
                             <i class="fa-solid fa-code-branch text-violet-400 mt-1"></i>
                             <div>
-                                <strong><code>bump-version</code></strong> — reads the current version from the target file, applies major/minor/patch semantics, writes the new version back, and outputs both the old and new version strings. Supports <code>go</code>, <code>rust</code>, <code>node</code>, <code>python</code>, <code>maven</code>, <code>gradle</code>, <code>dotnet</code>, and plain <code>text</code>.
+                                <strong><code>bump-version</code></strong> — reads the current version from the target file, applies major/minor/patch semantics, writes the new version back, and outputs both old and new version strings. Supports <code>go</code>, <code>rust</code>, <code>node</code>, <code>python</code>, <code>maven</code>, <code>gradle</code>, <code>dotnet</code>, and plain <code>text</code>. Works on one file per invocation — call it multiple times for monorepos with multiple version files.
                             </div>
                         </li>
                         <li class="flex gap-3">
                             <i class="fa-solid fa-circle-check text-emerald-400 mt-1"></i>
                             <div>
-                                <strong><code>is-tag</code></strong> — checks <code>GITHUB_REF</code> and falls back to <code>git describe --exact-match</code>. Used as a gate to ensure release steps only run on tagged commits, not on branch pushes.
+                                <strong><code>is-tag</code></strong> — checks <code>GITHUB_REF</code> and falls back to <code>git describe --exact-match</code>. Used as a gate in CI to ensure release steps only run on tagged commits, not on branch pushes.
                             </div>
                         </li>
                         <li class="flex gap-3">
                             <i class="fa-solid fa-tag text-slate-400 mt-1"></i>
                             <div>
-                                <strong><code>previous-tag</code></strong> — handles shallow clones, skips the current tag, and returns a configurable fallback (e.g. <code>v0.0.0</code>) if no prior tag exists. Used to compute the commit range for changelog generation.
+                                <strong><code>previous-tag</code></strong> — handles shallow clones correctly, skips the current tag automatically, and returns a configurable fallback if no prior tag exists. Provides the range boundary for changelog generation.
                             </div>
                         </li>
                         <li class="flex gap-3">
                             <i class="fa-solid fa-rocket text-blue-400 mt-1"></i>
                             <div>
-                                <strong><code>release</code></strong> — takes the version, since-tag, and provider (anthropic/openai/ollama) and creates the GitHub Release with AI-generated release notes summarising the changes since the previous tag.
+                                <strong><code>release</code></strong> — takes the version, the since-tag, and an AI provider (Anthropic, OpenAI, or local Ollama) and creates the GitHub Release with release notes that actually describe what changed for users — not a raw commit list.
                             </div>
                         </li>
                     </ul>
                 </div>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The AI-generated release notes are a material improvement over any commit-list approach. Rather than outputting <code>feat: add retry logic to webhook handler</code>, the model summarises the changes in plain language: "Webhook delivery is now retried up to three times on transient failures, reducing missed events during downstream outages." This is immediately useful to users and reviewers without requiring any commit discipline.
+                </p>
             </section>
 
             <section id="implementation" class="mb-12">
@@ -1217,14 +1263,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: \${{ secrets.REPO_PAT }}   # PAT required to trigger CI on push
-          fetch-depth: 0                     # full history for tag lookup
+          token: \${{ secrets.REPO_PAT }}   # PAT — GITHUB_TOKEN won't trigger CI on push
+          fetch-depth: 0                     # full history required for tag lookup
 
       - name: Bump version
         id: bump
         uses: octopilot/actions/bump-version@main
         with:
-          mode: rust                 # or: go, node, python, maven, gradle
+          mode: rust                 # go | rust | node | python | maven | gradle | dotnet | text
           bump: \${{ inputs.bump }}
           file: api/Cargo.toml
 
@@ -1256,12 +1302,21 @@ jobs:
           GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
 </pre>
                 <p class="text-gray-300 text-lg leading-relaxed mt-6">
-                    The workflow runs in under two minutes. The result: a versioned commit, a git tag, a GitHub Release with AI-summarised release notes, and — because the push uses <code>REPO_PAT</code> — the full CI pipeline triggered on the new tag, building and attesting the release container image.
+                    The workflow runs in under two minutes. The result: a versioned commit in the repo, a git tag, a GitHub Release with AI-written release notes, and — because the push uses <code>REPO_PAT</code> — the full CI pipeline triggered on the new tag, building and attesting the release container image.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mt-6">
+                    Compare this to Release-Please: no release PR to manage, no Conventional Commits requirement, no manifest state file to audit when things go wrong. The entire release state is in git — the commit and the tag. Any engineer can reason about it without reading tool documentation.
                 </p>
                 <div class="p-6 bg-amber-500/10 border-l-4 border-amber-500 rounded-r-lg mt-6">
                     <h4 class="text-white font-bold mb-2">Multiple version files</h4>
                     <p class="text-gray-300">
-                        For monorepos with multiple version files, call <code>bump-version</code> once per file. The action handles one file at a time — call it for <code>api/Cargo.toml</code>, then again for <code>frontend/package.json</code>, using the same <code>bump</code> input each time.
+                        For monorepos with multiple version files, call <code>bump-version</code> once per file with the same <code>bump</code> input. For example, bump <code>api/Cargo.toml</code> for the Rust backend and <code>site/package.json</code> for the frontend — both receive the same version in the same job.
+                    </p>
+                </div>
+                <div class="p-6 bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">Migrating from Release-Please</h4>
+                    <p class="text-gray-300">
+                        Migration is a single-afternoon task. Delete the Release-Please workflow and any open release PRs. Add the <code>release.yml</code> workflow above. Store <code>REPO_PAT</code> in repository secrets. The first manual dispatch will pick up from wherever your last tag is — no history rewriting or manifest migration required.
                     </p>
                 </div>
             </section>
