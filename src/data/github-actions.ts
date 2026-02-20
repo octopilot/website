@@ -853,32 +853,5 @@ jobs:
     icon: "fa-microsoft",
     iconColor: "text-blue-600",
     iconBg: "bg-blue-600/10"
-  },
-  {
-    id: "build-self-homing",
-    title: "Build Self-Homing (Internal)",
-    path: "octopilot/actions/build-self-homing@main",
-    version: "v1",
-    description: "Internal action used by octopilot's own CI pipeline to cross-compile the `op` CLI binary for all supported platforms (linux/amd64, linux/arm64, darwin/amd64, darwin/arm64). Not intended for use in third-party repositories.",
-    features: [
-      "Cross-compiles for 4 platforms",
-      "Injects version via ldflags",
-      "Used only in octopilot's own release pipeline",
-      "Outputs binaries to configurable dist/ directory"
-    ],
-    inputs: [
-      { name: "version", description: "Version string to inject into the binary (e.g. v1.2.3)", required: true },
-      { name: "output_dir", description: "Directory to write output binaries", required: false, default: "dist" }
-    ],
-    example: `# This action is used internally by octopilot/octopilot-pipeline-tools
-# It is NOT intended for third-party use.
-- name: Build binaries
-  uses: octopilot/actions/build-self-homing@main
-  with:
-    version: \${{ github.ref_name }}
-    output_dir: dist`,
-    icon: "fa-screwdriver-wrench",
-    iconColor: "text-gray-400",
-    iconBg: "bg-gray-500/10"
   }
 ];
