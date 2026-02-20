@@ -1,0 +1,15 @@
+Octopilot Website
+Copyright 2024 Octopilot (https://octopilot.app)
+
+This product includes software developed by Octopilot.
+
+The website source code (SolidJS, Vite, TypeScript) is licensed under
+the Apache License 2.0. Blog content, documentation text, and marketing
+copy are copyright Octopilot and may not be reproduced without permission.
+
+If you use or redistribute the software components of this repository,
+this NOTICE file must be included in full in any distribution,
+documentation, or derived work (Apache License 2.0, Section 4(d)).
+
+Source code:
+  https://github.com/octopilot/website
