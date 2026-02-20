@@ -1830,5 +1830,183 @@ steps:
                 </div>
             </section>
         `
+    },
+    {
+        id: '19',
+        title: 'Let Your AI Agent Wire Up Your CI/CD: The Octopilot MCP',
+        excerpt: 'Onboarding a project to a proper CI/CD pipeline — skaffold.yaml, multi-arch builds, lint, test, SLSA attestation, automated releases — normally takes hours. The Octopilot MCP server lets your AI agent do it in a single conversation, with Docker as the only prerequisite.',
+        category: 'Developer',
+        readTime: '9 min read',
+        image: '/assets/blog/octopilot-mcp.png',
+        author: {
+            name: 'Taylor Morgan',
+            role: 'Developer Advocate',
+            avatar: '/assets/blog/avatar-alex.jpg'
+        },
+        slug: 'octopilot-mcp-ai-agent-cicd',
+        relatedSlugs: ['octopilot-actions-intro', 'zero-config-ci-detect-contexts', 'why-we-open-sourced-pipeline-tools'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    There's a category of DevOps work that is straightforward to describe but tedious to execute: "set up a proper CI/CD pipeline for this repository." You know what it should contain — a <code>skaffold.yaml</code> for the build config, a GitHub Actions workflow with lint, test, and container build jobs, multi-arch platform targets, SLSA attestation, an automated release workflow. None of it is hard. All of it is time-consuming to write from scratch, and it's the kind of work that either gets skipped or copy-pasted from a previous project that may itself have been imperfect.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        The Octopilot MCP server gives AI agents (Cursor, Claude Desktop, or any MCP-compatible client) direct access to Octopilot's pipeline toolchain. One tool call — <code>onboard_repository</code> — detects languages, generates a complete <code>skaffold.yaml</code> and <code>.github/workflows/ci.yml</code>, and returns a checklist of remaining manual steps. Docker is the only prerequisite.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Onboarding Problem</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Every new project or repository in an organisation should have the same pipeline shape. In practice, they don't. The first few repositories get carefully crafted pipelines. The tenth gets a copy-paste from the third with some variable names changed. The twentieth gets a minimal workflow because the engineer setting it up is busy and "we can improve it later." Later never comes.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The result is the snowflake workflow problem we described in <a href="/blog/why-we-open-sourced-pipeline-tools" class="text-blue-400 hover:text-blue-300">our post on why we open-sourced our pipeline tools</a>. The antidote is standardisation. But standardisation only sticks if the standard is easy to apply — ideally easier than reaching for the clipboard.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">What "onboarding" actually involves</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-file-code text-blue-400 mt-1"></i><div>Write <code>skaffold.yaml</code> with the correct buildpack builder, image names, and context paths</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-file-code text-blue-400 mt-1"></i><div>Write <code>.github/workflows/ci.yml</code> with detect → lint+test → build → release pattern</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-magnifying-glass text-blue-400 mt-1"></i><div>Detect which languages are present and configure the right toolchain versions</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-key text-blue-400 mt-1"></i><div>Configure repository secrets (<code>REPO_PAT</code> for releases, registry credentials)</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-shield text-blue-400 mt-1"></i><div>Enable SLSA attestation permissions and configure the attestation step</div></li>
+                    </ul>
+                </div>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Experienced engineers can do this in about an hour. Engineers new to the Octopilot toolchain take longer. And in an organisation with 50 repositories, someone is doing this 50 times — or skipping it 45 times.
+                </p>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">MCP: Tools Your Agent Can Use</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The <a href="https://modelcontextprotocol.io" class="text-blue-400 hover:text-blue-300">Model Context Protocol</a> (MCP) is an open standard, originally from Anthropic, that allows AI agents to call external tools in a structured way. Rather than describing a tool in a system prompt and hoping the model generates the right shell commands, MCP gives the agent a formal interface: typed inputs, typed outputs, and a declared schema the model can reason about precisely.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The Octopilot MCP server exposes eight tools and three resources. The tools your AI agent can use:
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <ul class="space-y-4 text-gray-300">
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-wand-magic-sparkles text-violet-400 mt-1"></i>
+                            <div>
+                                <strong><code>onboard_repository(workspace, registry)</code></strong> — the single-call onboarding tool. Detects languages and versions, generates <code>skaffold.yaml</code> (if missing) and a complete <code>.github/workflows/ci.yml</code>, returns both files as strings plus a checklist of remaining manual steps (secrets to create, branch protections to set up).
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-magnifying-glass-chart text-cyan-400 mt-1"></i>
+                            <div>
+                                <strong><code>detect_project_contexts(workspace)</code></strong> — parses <code>skaffold.yaml</code> and returns the full <code>pipeline-context</code> JSON object: detected languages, versions, build matrix. Useful when the agent needs to understand an existing repo before modifying its pipeline.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-file-code text-green-400 mt-1"></i>
+                            <div>
+                                <strong><code>generate_skaffold_yaml(artifacts, builder)</code></strong> — generates a <code>skaffold.yaml</code> from a list of artifact definitions. The agent calls this when the repository already has some CI config and needs only the build manifest.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-file-code text-green-400 mt-1"></i>
+                            <div>
+                                <strong><code>generate_ci_workflow(pipeline_context, registry)</code></strong> — generates the complete GitHub Actions workflow from a pipeline-context. Includes the detect → lint+test → build → release shape with all platform and attestation configuration.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-hammer text-amber-400 mt-1"></i>
+                            <div>
+                                <strong><code>run_op_build(workspace, registry, push)</code></strong> — runs <code>op build</code> in the workspace using the official <code>ghcr.io/octopilot/op</code> container. Useful for building images locally during development, triggered by the agent from your IDE.
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-list text-slate-400 mt-1"></i>
+                            <div>
+                                <strong><code>list_actions()</code> / <code>get_action_details(action_id)</code></strong> — surfaces the complete Octopilot actions registry to the agent. When asked "how do I set up the release workflow?" the agent can look up the <code>bump-version</code> and <code>release</code> action specs directly, including inputs, outputs, examples, and known gotchas.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="p-6 bg-amber-500/10 border-l-4 border-amber-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">What the MCP intentionally does not do</h4>
+                    <p class="text-gray-300">
+                        <code>op promote-image</code> — promoting container images between environments — is deliberately not available via MCP. Image promotion touches production infrastructure and must only run through a GitHub Actions workflow with a full audit trail and environment protection rules. Giving an AI agent the ability to push untested images to production would be operationally irresponsible regardless of how capable the model is.
+                    </p>
+                </div>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Onboarding a Repository in One Conversation</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Here is what onboarding a new Rust service looks like when your agent has the Octopilot MCP configured. You open your IDE, point it at the repository, and ask:
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <div class="font-mono text-sm space-y-4">
+                        <div class="flex gap-3">
+                            <span class="text-blue-400 font-bold shrink-0">You:</span>
+                            <span class="text-gray-300">Set up the Octopilot CI/CD pipeline for this repo. The registry is ghcr.io/my-org.</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-purple-400 font-bold shrink-0">Agent:</span>
+                            <span class="text-gray-300">Calling <code>onboard_repository("/Users/me/my-rust-service", "ghcr.io/my-org")</code>…</span>
+                        </div>
+                        <div class="bg-black/40 rounded-lg p-4 text-xs text-gray-400 font-mono">
+                            {<br/>
+                            &nbsp;&nbsp;"pipeline_context": {"{"} "languages": ["rust"], "rust": {"{"} "version": "1.84" {"}"} {"}"},<br/>
+                            &nbsp;&nbsp;"skaffold_yaml": "apiVersion: skaffold/v4beta1\\nbuild:\\n  artifacts:\\n  - image: my-rust-service\\n  ...",<br/>
+                            &nbsp;&nbsp;"ci_workflow": "name: CI\\non:\\n  push:\\n  ...",<br/>
+                            &nbsp;&nbsp;"files_to_create": ["skaffold.yaml", ".github/workflows/ci.yml"],<br/>
+                            &nbsp;&nbsp;"next_steps": [<br/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;"Add REPO_PAT secret to repository settings",<br/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;"Enable 'Read and write permissions' for GITHUB_TOKEN in Actions settings",<br/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;"Add octopilot/actions/release@main workflow for automated releases"<br/>
+                            &nbsp;&nbsp;]<br/>
+                            }
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-purple-400 font-bold shrink-0">Agent:</span>
+                            <span class="text-gray-300">I've created <code>skaffold.yaml</code> and <code>.github/workflows/ci.yml</code>. The pipeline detects Rust 1.84 and will run Clippy linting, cargo tests, and build a multi-arch container image to <code>ghcr.io/my-org/my-rust-service</code>. Three manual steps remain — shall I walk through them?</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The agent wrote both files, committed them, and gave you an accurate checklist of what's left. Total time: under 30 seconds. The generated files are not templates with placeholders — they are real, working configuration tailored to the detected language and the specified registry.
+                </p>
+                <h3 class="text-2xl font-bold text-white mb-4 mt-8">Installing the MCP Server</h3>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The Octopilot MCP server is published to PyPI and runs via <code>uv</code>. Docker (or Colima on macOS) must be running — the server uses the official <code>op</code> container for build operations, which means it always uses the latest version of the tool without any manual update step.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Install in one command — this installs the MCP and auto-registers it with Cursor and Claude Desktop:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+curl -fsSL https://mcp.octopilot.app/install | sh
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Or add it manually to your MCP client config:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+{
+  "mcpServers": {
+    "octopilot": {
+      "command": "uvx",
+      "args": ["octopilot-mcp"]
+    }
+  }
+}
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    After installation, restart your MCP client. The <code>octopilot</code> server will appear in the tools panel. The first time the agent calls <code>run_op_build</code>, Docker will pull the latest <code>ghcr.io/octopilot/op</code> image — subsequent calls use the cached image unless a newer version has been published.
+                </p>
+                <div class="p-6 bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">Using the MCP in Cursor</h4>
+                    <p class="text-gray-300">
+                        In Cursor, open a repository and use Agent mode. The agent will automatically use the Octopilot MCP tools when you ask it to set up CI, onboard the project, or build an image. You can also ask it to look up action details: "What are the inputs for the <code>sops-decrypt</code> action?" — the agent will call <code>get_action_details("sops-decrypt")</code> and return the full spec from the live registry.
+                    </p>
+                </div>
+            </section>
+        `
     }
 ];
