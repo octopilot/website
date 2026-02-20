@@ -2388,5 +2388,1136 @@ image:
                 </div>
             </section>
         `
+    },
+    {
+        id: '22',
+        title: 'The Missing Bridge: Why SOPS Alone Doesn\'t Solve Serverless Secrets',
+        excerpt: 'SOPS-encrypted secrets in Git are an elegant solution for Kubernetes workloads. But when your platform team wants to migrate services to Cloud Run, Lambda, or Azure Functions to cut costs, they hit a wall: serverless can\'t reach in-cluster secrets. Two parallel secret worlds, one engineering team, zero good options.',
+        category: 'Enterprise',
+        readTime: '9 min read',
+        image: '/assets/blog/sops-serverless-gap.png',
+        author: {
+            name: 'Rachel Thompson',
+            role: 'Security Architect',
+            avatar: '/assets/blog/avatar-rachel.jpg'
+        },
+        slug: 'sops-serverless-secrets-gap',
+        relatedSlugs: ['repo-local-encryption', 'cicd-secret-injection', 'least-privilege-access'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    SOPS-encrypted secrets committed to Git are a well-understood, well-regarded pattern. The secret file lives in the repository alongside the code that uses it. Access is controlled cryptographically — only holders of the correct private key can decrypt. The history of every change is in Git. Rotation is a commit. Audit is <code>git log</code>. For teams running Kubernetes workloads managed by FluxCD or ArgoCD, the pattern works cleanly from end to end.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The problem emerges the moment a platform team tries to migrate a workload from Kubernetes to a serverless compute platform — Google Cloud Run, AWS Lambda, Azure Functions. Serverless is compelling for FinOps: you pay per invocation rather than per provisioned pod, you eliminate the overhead of managing container replicas, and you can right-size compute precisely. But serverless functions have no awareness of in-cluster Kubernetes resources. They cannot reach a SOPS-decrypted Kubernetes Secret. The elegant GitOps secret pattern stops working at the K8s cluster boundary.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        SOPS is a Git-native encryption tool, not a secret delivery mechanism. It solves how to store secrets safely. It does not solve how to deliver secrets to workloads that run outside the Kubernetes control plane. Serverless migration exposes this gap — and the cost of leaving it unaddressed is either a fragmented secret management strategy or a blocked migration.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Two-World Problem</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    When an organisation runs both Kubernetes workloads and serverless workloads, secret management bifurcates. Kubernetes workloads use SOPS + GitOps — the secrets are in Git, decrypted in-cluster by a controller, and injected as Kubernetes Secrets. Serverless workloads use cloud-native secret stores — GCP Secret Manager, AWS Secrets Manager, or Azure Key Vault — because these are the only mechanisms those platforms support for runtime secret access.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">What running two parallel secret systems costs</h3>
+                    <ul class="space-y-4 text-gray-300">
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-copy text-red-400 mt-1"></i>
+                            <div><strong>Duplicated secrets:</strong> Every secret needed by a serverless function must be stored twice — once in Git (SOPS-encrypted) and once in the cloud-native store. They can drift out of sync. Rotation must happen in two places.</div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-split text-red-400 mt-1"></i>
+                            <div><strong>Two pipelines for secret changes:</strong> Rotating a database password requires updating the SOPS file, the cloud-native store entry, and verifying both consumers received the update. The audit trail is split across two systems.</div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-ban text-red-400 mt-1"></i>
+                            <div><strong>Blocked migrations:</strong> A team that wants to move a K8s service to Cloud Run for cost savings cannot do so cleanly until the secret management problem is solved. The FinOps case that drives the migration stalls on infrastructure friction.</div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-user-gear text-red-400 mt-1"></i>
+                            <div><strong>Operational complexity:</strong> Platform engineers must maintain expertise in two secret management systems, two access control models, two rotation procedures. Onboarding a new team member to "how secrets work here" doubles in complexity.</div>
+                        </li>
+                    </ul>
+                </div>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The fundamental issue is architectural. SOPS is an encryption format, not a secret broker. It has no API, no push mechanism, no polling loop. It encrypts a file at rest. Something else — a Kubernetes controller, a CI step, a developer's local <code>sops -d</code> invocation — must decrypt and deliver the value to the workload that needs it. For Kubernetes, that "something else" is well-established. For serverless, it has historically been the cloud-native secret store, managed independently.
+                </p>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">What a Bridge Looks Like</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The solution is a Kubernetes controller that acts as the bridge: it runs inside the cluster (where SOPS decryption is already available), reads the SOPS-encrypted secrets from Git, decrypts them, and pushes the decrypted values to the cloud-native secret store of your choice. The single source of truth remains Git. The delivery mechanism to serverless workloads becomes the cloud-native store. The two systems are no longer parallel — they are the same system with one synchronisation step.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">The unified flow</h3>
+                    <ol class="list-none space-y-3 text-gray-300">
+                        <li class="flex gap-3"><span class="text-blue-400 font-bold shrink-0">1.</span><div>Secret stored once: SOPS-encrypted in Git (the existing workflow, unchanged)</div></li>
+                        <li class="flex gap-3"><span class="text-blue-400 font-bold shrink-0">2.</span><div>GitOps reconciliation: FluxCD applies the encrypted secret manifest to the cluster</div></li>
+                        <li class="flex gap-3"><span class="text-blue-400 font-bold shrink-0">3.</span><div>Controller decrypts: Secret Manager Controller reads the manifest, decrypts the value in-cluster</div></li>
+                        <li class="flex gap-3"><span class="text-blue-400 font-bold shrink-0">4.</span><div>Controller syncs: Pushes the decrypted value to GCP Secret Manager / AWS Secrets Manager / Azure Key Vault</div></li>
+                        <li class="flex gap-3"><span class="text-emerald-400 font-bold shrink-0">✓</span><div>K8s workloads and serverless functions both read from the same secret — through their respective native mechanisms</div></li>
+                    </ol>
+                </div>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The FinOps Unlock</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The downstream benefit of solving this problem is the ability to migrate workloads to serverless without a secret management migration as a prerequisite. A service running on a K8s deployment costs money for every minute the pod exists, regardless of load. The same service on Cloud Run costs money only when it handles requests.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The workloads best suited for serverless — internal tools, event-driven processors, low-traffic APIs — are precisely the ones most likely to be blocked by the secret management gap. Removing that blocker unlocks a class of migrations that deliver immediate, measurable cost reduction without requiring any change to the application code or the secret storage model.
+                </p>
+                <div class="p-6 bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">Next: the implementation</h4>
+                    <p class="text-gray-300">
+                        The next post in this series introduces the <a href="/blog/secret-manager-controller-intro" class="text-blue-400 hover:text-blue-300">Secret Manager Controller</a> — the Kubernetes controller that implements this bridge — and walks through the <code>SecretManagerConfig</code> CRD that defines the sync behaviour.
+                    </p>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '23',
+        title: 'Secret Manager Controller: SOPS Secrets to GCP, AWS, and Azure in One CRD',
+        excerpt: 'Secret Manager Controller is a Kubernetes controller that reads SOPS-encrypted secrets from your GitOps repository and syncs them to GCP Secret Manager, AWS Secrets Manager, or Azure Key Vault. One CRD, one source of truth, three cloud targets.',
+        category: 'Enterprise',
+        readTime: '11 min read',
+        image: '/assets/blog/secret-manager-controller.png',
+        author: {
+            name: 'Marcus Chen',
+            role: 'Platform Architect',
+            avatar: '/assets/blog/avatar-marcus.jpg'
+        },
+        slug: 'secret-manager-controller-intro',
+        relatedSlugs: ['sops-serverless-secrets-gap', 'serverless-migration-gitops', 'repo-local-encryption'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Secret Manager Controller is a Kubernetes operator written in Rust. It watches for <code>SecretManagerConfig</code> custom resources in your cluster, reads the SOPS-encrypted secret values they reference, decrypts them using the cluster's key access (KMS, Age, or GPG), and pushes the decrypted values to the cloud-native secret store of your choice.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        A single <code>SecretManagerConfig</code> custom resource defines the mapping: which SOPS-encrypted Kubernetes Secret to read, which cloud-native store to write to, and which keys to sync. The controller runs continuously, keeping the cloud store in sync whenever the Git-sourced secret changes.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Quick Start</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Install the controller and its CRD into your cluster:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+# Apply the CRD
+kubectl apply -f https://raw.githubusercontent.com/octopilot/secret-manager-controller/main/config/crd/secretmanagerconfig.yaml
+
+# Deploy the controller
+kubectl apply -k https://github.com/octopilot/secret-manager-controller/config/
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The controller runs in the <code>secret-manager-system</code> namespace. It needs cloud provider credentials with write access to your secret store — see the <a href="https://octopilot.github.io/secret-manager-controller/#/user/getting-started/configuration" class="text-blue-400 hover:text-blue-300">configuration guide</a> for provider-specific Workload Identity setup.
+                </p>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The SecretManagerConfig CRD</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    A <code>SecretManagerConfig</code> resource tells the controller what to sync and where to send it. The structure is deliberately minimal:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+apiVersion: secrets.octopilot.io/v1alpha1
+kind: SecretManagerConfig
+metadata:
+  name: database-credentials
+  namespace: production
+spec:
+  # Source: a SOPS-encrypted Kubernetes Secret in this namespace
+  sourceSecret:
+    name: database-creds-encrypted
+
+  # Target: where to push the decrypted values
+  target:
+    provider: gcp                         # gcp | aws | azure
+    gcp:
+      project: my-gcp-project
+      secretId: database-password         # created if it doesn't exist
+
+  # Key mapping: which keys from the K8s secret to sync
+  keys:
+    - sourceKey: password
+      targetKey: database-password
+    - sourceKey: username
+      targetKey: database-username
+</pre>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Provider support</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-brands fa-google text-blue-400 mt-1"></i><div><strong>GCP Secret Manager</strong> — uses Workload Identity Federation. The controller's service account needs <code>roles/secretmanager.admin</code> on the target project.</div></li>
+                        <li class="flex gap-3"><i class="fa-brands fa-aws text-amber-400 mt-1"></i><div><strong>AWS Secrets Manager</strong> — uses IRSA (IAM Roles for Service Accounts). The controller's service account assumes a role with <code>secretsmanager:CreateSecret</code> and <code>secretsmanager:PutSecretValue</code>.</div></li>
+                        <li class="flex gap-3"><i class="fa-brands fa-microsoft text-blue-300 mt-1"></i><div><strong>Azure Key Vault</strong> — uses Azure Workload Identity. The controller's managed identity needs <code>Key Vault Secrets Officer</code> on the target vault.</div></li>
+                    </ul>
+                </div>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The controller reconciles on a configurable interval and on changes to the source <code>Secret</code> resource. When FluxCD applies an updated SOPS-decrypted secret (because the Git source changed), the controller detects the change and pushes the new value to the cloud store within seconds. The cloud secret version history provides a full audit trail of every value change.
+                </p>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">GitOps-Native Operation</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The controller integrates with any GitOps tool — FluxCD, ArgoCD, or manual <code>kubectl apply</code>. The <code>SecretManagerConfig</code> resource is itself a Kubernetes manifest that lives in your GitOps repository alongside your SOPS-encrypted secrets. The controller's desired state is entirely declared in Git.
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+# Typical GitOps repository layout
+clusters/production/
+  secrets/
+    database-creds.enc.yaml      # SOPS-encrypted Secret
+    database-sync-config.yaml    # SecretManagerConfig CRD
+  apps/
+    my-service-helmrelease.yaml  # References the K8s Secret
+  serverless/
+    cloud-run-service.yaml       # References GCP Secret Manager
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mt-6">
+                    When a developer rotates a database password, the workflow is the same as any other secret change: update the SOPS-encrypted file, commit to Git, push. FluxCD applies the updated Secret to the cluster. The controller syncs the new value to GCP Secret Manager. Both the Kubernetes pod and the Cloud Run service receive the updated password through their respective secret-reading mechanisms. One commit, two delivery paths, zero manual steps.
+                </p>
+                <div class="p-6 bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">Full documentation</h4>
+                    <p class="text-gray-300">
+                        Installation, provider setup, CRD reference, and the MSMCTL CLI are documented at <a href="https://octopilot.github.io/secret-manager-controller" class="text-blue-400 hover:text-blue-300">octopilot.github.io/secret-manager-controller</a>.
+                    </p>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '24',
+        title: 'Serverless Migration Without Abandoning GitOps',
+        excerpt: 'The FinOps case for moving services to Cloud Run, Lambda, or Azure Functions is compelling. The barrier is usually secrets: SOPS-based GitOps workflows don\'t extend to serverless. This post shows the migration pattern that lets you move workloads incrementally without changing how secrets are managed.',
+        category: 'Enterprise',
+        readTime: '10 min read',
+        image: '/assets/blog/serverless-migration-gitops.png',
+        author: {
+            name: 'David Kumar',
+            role: 'Security Operations',
+            avatar: '/assets/blog/avatar-sam.jpg'
+        },
+        slug: 'serverless-migration-gitops',
+        relatedSlugs: ['sops-serverless-secrets-gap', 'secret-manager-controller-intro', 'compliance-audit-requirements'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The business case for serverless is straightforward: right-sized compute means you pay for what you use, not what you provision. An internal API that handles 200 requests per day costs pennies on Cloud Run; the same API on a perpetually-running Kubernetes pod with reserved resources costs orders of magnitude more. For platform teams tasked with reducing cloud spend, moving eligible workloads to serverless is one of the highest-return actions available.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The barrier is almost never the application code. Containerised services built with Octopilot are already portable — the same image that runs on Kubernetes runs on Cloud Run or in a Lambda container runtime. The barrier is infrastructure: particularly secrets. This post describes the migration pattern that removes that barrier.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        The migration pattern is additive. You install Secret Manager Controller alongside your existing setup, verify that secrets are syncing correctly, then migrate workloads. The K8s deployment and the serverless deployment can coexist during the transition — both reading from the same secret source.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Identifying Serverless Candidates</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Not every workload belongs on serverless. The best candidates share common characteristics: they handle discrete, event-driven requests; they have variable or low traffic; they are stateless; and they start up quickly. Internal tooling, webhooks, background processors, and API services with predictable cold-start tolerance are typically good fits. Latency-sensitive services, stateful services, and services with complex startup logic are typically better suited to stay on Kubernetes.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Good serverless candidates</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-check text-green-400 mt-1"></i><div>Internal APIs with low or spiky traffic patterns (reports, admin tools, integrations)</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-check text-green-400 mt-1"></i><div>Event-driven processors (webhook handlers, queue consumers, scheduled jobs)</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-check text-green-400 mt-1"></i><div>Services that currently idle most of the day but must be available</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-xmark text-red-400 mt-1"></i><div>Latency-critical services where a 200ms cold start is unacceptable</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-xmark text-red-400 mt-1"></i><div>Services that maintain in-memory state between requests</div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Migration Sequence</h2>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <ol class="list-none space-y-5 text-gray-300">
+                        <li class="flex gap-4">
+                            <span class="text-blue-400 font-bold text-lg shrink-0">1.</span>
+                            <div>
+                                <strong class="text-white">Install Secret Manager Controller.</strong> Deploy the controller to your existing cluster. Configure cloud provider credentials using Workload Identity (no long-lived keys). Verify the controller is running and healthy.
+                            </div>
+                        </li>
+                        <li class="flex gap-4">
+                            <span class="text-blue-400 font-bold text-lg shrink-0">2.</span>
+                            <div>
+                                <strong class="text-white">Create SecretManagerConfig resources for target services.</strong> For each service you plan to migrate, create a <code>SecretManagerConfig</code> that maps its existing SOPS-encrypted K8s secrets to the cloud-native store. Commit these to Git; FluxCD applies them; the controller begins syncing.
+                            </div>
+                        </li>
+                        <li class="flex gap-4">
+                            <span class="text-blue-400 font-bold text-lg shrink-0">3.</span>
+                            <div>
+                                <strong class="text-white">Verify sync before touching workloads.</strong> Confirm the secrets appear correctly in GCP Secret Manager / AWS Secrets Manager / Azure Key Vault. Rotate a non-production secret and verify the update propagates within the expected window. Only proceed once you trust the sync.
+                            </div>
+                        </li>
+                        <li class="flex gap-4">
+                            <span class="text-blue-400 font-bold text-lg shrink-0">4.</span>
+                            <div>
+                                <strong class="text-white">Deploy the service to serverless alongside the K8s deployment.</strong> The Octopilot-built container image runs unchanged. Configure it to read secrets from the cloud-native store rather than from Kubernetes Secrets. Route a percentage of traffic to the serverless instance.
+                            </div>
+                        </li>
+                        <li class="flex gap-4">
+                            <span class="text-blue-400 font-bold text-lg shrink-0">5.</span>
+                            <div>
+                                <strong class="text-white">Shift traffic and decommission the K8s deployment.</strong> Once the serverless instance is validated, move all traffic, remove the K8s Deployment and Service resources. The <code>SecretManagerConfig</code> resource and the SOPS-encrypted Git source remain — they are now the only path to secret delivery, and the workflow is identical to before.
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">What Doesn't Change</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The migration pattern is deliberately designed to leave the secret management workflow unchanged for developers. The person who rotates a database password commits a change to the SOPS-encrypted file in Git. They do not need to know whether the consumer is a Kubernetes pod or a Cloud Run revision. The controller handles delivery. The cloud-native store provides access.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Compliance posture is preserved: Git remains the authoritative record of secret changes, with commit signatures providing attribution and timestamps. Cloud provider version history provides a secondary record of what was pushed and when. The audit trail is richer after the migration than before.
+                </p>
+                <div class="p-6 bg-amber-500/10 border-l-4 border-amber-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">Note on mixed environments</h4>
+                    <p class="text-gray-300">
+                        During the transition period, both the K8s deployment and the serverless deployment run simultaneously, both reading the same secret values via different delivery paths. This is intentional and safe — the secret values are identical because they come from the same Git source. The K8s pod reads from a Kubernetes Secret; the Cloud Run revision reads from GCP Secret Manager; both values were decrypted from the same SOPS-encrypted Git file.
+                    </p>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '25',
+        title: 'Zero-Dockerfile Builds: How Cloud Native Buildpacks Turn Source Into Container',
+        excerpt: 'Most developers treat Dockerfiles as unavoidable. Cloud Native Buildpacks are a standard that turns your source code into a container image without one — detecting your language, installing dependencies, compiling if needed, and producing a reproducible, patchable image. Here\'s how it works and why it matters.',
+        category: 'Developer',
+        readTime: '9 min read',
+        image: '/assets/blog/cloud-native-buildpacks.png',
+        author: {
+            name: 'Sam Patel',
+            role: 'DevOps Engineer',
+            avatar: '/assets/blog/avatar-sam.jpg'
+        },
+        slug: 'cloud-native-buildpacks-intro',
+        relatedSlugs: ['multi-arch-containers-op-action', 'octopilot-actions-intro', 'rust-buildpack-scenarios'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Dockerfiles have become the default unit of containerisation knowledge. Every tutorial, every quickstart guide, every job description that mentions containers assumes you know how to write one. But Dockerfiles are also a maintenance obligation: you choose the base image, you update it when security patches land, you manage layer ordering for cache efficiency, you handle multi-stage builds for smaller output images, and you deal with the subtle differences between your Dockerfile and your colleague's when builds behave differently.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Cloud Native Buildpacks (CNB) are a CNCF standard that separates the "how to build" knowledge from the application code. The buildpack detects your language from your project files, installs the right dependencies, compiles where necessary, and produces an OCI image. You don't write a Dockerfile. The buildpack author — who has more context about your language's build toolchain than most application developers — handles the container construction details.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        Cloud Native Buildpacks produce reproducible, rebasing-friendly images from source code. When a base image security patch is released, you rebase your image against the patched base without rebuilding from source. You get the security update in minutes rather than waiting for a CI run.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Detect → Build → Export Lifecycle</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    A buildpack run proceeds in three phases. <strong>Detection</strong>: each buildpack in the builder's group runs its detect script against your source directory. The first group whose buildpacks all pass becomes the build order. For a Go project, this means the Go buildpack detects <code>go.mod</code> and claims the build. For a Rust project, the Rust buildpack detects <code>Cargo.toml</code>.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    <strong>Build</strong>: each selected buildpack runs its build script. It installs toolchains into a cached layer, restores dependencies (the module cache, the cargo registry), compiles the application, and writes the output to a launch layer. Each layer is content-addressed — if your dependencies haven't changed since last build, the dependency layer is reused exactly.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    <strong>Export</strong>: the lifecycle assembles the layers into an OCI image and pushes it to the registry. The image includes a Software Bill of Materials (SBOM) generated by the buildpacks, listing every dependency installed during the build.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">What the Octopilot builder provides</h3>
+                    <p class="text-gray-300 mb-4">
+                        <code>ghcr.io/octopilot/builder-jammy-base</code> is the Octopilot builder image. It bundles the Go and Rust buildpacks, a curated set of Paketo buildpacks for Node.js, Python, Java, Ruby, and .NET, and a Ubuntu 22.04 (Jammy) base stack. The builder is updated regularly — when you rebuild using the same builder tag, you automatically pick up any buildpack improvements.
+                    </p>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-check text-green-400 mt-1"></i><div>Auto-detects language from project files — no configuration required for standard layouts</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-check text-green-400 mt-1"></i><div>Dependency layer caching dramatically speeds repeated builds</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-check text-green-400 mt-1"></i><div>SBOM generation included — Octopilot's CI pipeline attests the SBOM alongside the image</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-check text-green-400 mt-1"></i><div>Rebase-compatible — base image patches applied without rebuilding application layers</div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Using Buildpacks in skaffold.yaml</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    In a Skaffold configuration, switching from a Dockerfile build to a buildpack build is a single change in the artifact stanza:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+build:
+  artifacts:
+    - image: my-go-service
+      context: .
+      buildpacks:                          # replaces docker: { dockerfile: Dockerfile }
+        builder: ghcr.io/octopilot/builder-jammy-base:latest
+        # No further configuration needed for a standard Go project
+        # The buildpack detects go.mod and handles the rest
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Environment variables prefixed with <code>BP_</code> configure buildpack behaviour. For a Go project, <code>BP_GO_TARGETS</code> specifies which packages to build. For a Node.js project, <code>BP_NODE_RUN_SCRIPTS</code> adds build scripts to the lifecycle. For Rust, <code>BP_RUST_PACKAGE</code> selects a specific crate from a workspace.
+                </p>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Rebase Advantage</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The most significant operational advantage of buildpack images over Dockerfile images is rebasing. When a CVE is patched in the Ubuntu base image, a Dockerfile-built image must be rebuilt from scratch — the CI pipeline must run, the build must complete, the new image must be pushed and deployed. This can take 10–30 minutes depending on the build complexity.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    A buildpack image can be rebased: the base layers are swapped out for the patched base without touching the application layers. The operation takes seconds and produces an image with an updated base but identical application content. Your security team gets patches applied across the entire image fleet faster than any CI-rebuild approach can achieve.
+                </p>
+                <div class="p-6 bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">Further reading</h4>
+                    <p class="text-gray-300">
+                        The Cloud Native Buildpacks specification is at <a href="https://buildpacks.io" class="text-blue-400 hover:text-blue-300">buildpacks.io</a>. The Paketo buildpacks (which the Octopilot builder builds on) are documented at <a href="https://paketo.io/docs" class="text-blue-400 hover:text-blue-300">paketo.io/docs</a>.
+                    </p>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '26',
+        title: 'The Octopilot Rust Buildpack: Every Build Scenario Covered',
+        excerpt: 'Building Rust with Cloud Native Buildpacks covers more ground than you might expect: single crates, workspace monoliths, suite builds targeting one service, split images per binary, debug vs release profiles, and Dioxus fullstack apps. One buildpack, every scenario.',
+        category: 'Developer',
+        readTime: '11 min read',
+        image: '/assets/blog/rust-buildpack.png',
+        author: {
+            name: 'Jordan Lee',
+            role: 'Senior DevOps Engineer',
+            avatar: '/assets/blog/avatar-jordan.jpg'
+        },
+        slug: 'rust-buildpack-scenarios',
+        relatedSlugs: ['cloud-native-buildpacks-intro', 'inline-buildpack-assets', 'multi-service-monorepo'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Rust projects come in a variety of shapes. A simple service is a single crate with one binary. A larger codebase is a Cargo workspace with multiple packages, each producing a binary. A microservices platform might be a workspace where you want to build and deploy individual services as separate images. And a Dioxus fullstack application is a workspace where the frontend and backend are compiled together with different feature flags.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The Octopilot Rust buildpack handles all of these through environment variable configuration, without requiring any Dockerfile or custom build script. Detection is automatic — the buildpack runs if <code>Cargo.toml</code> is present at the app root.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        Four environment variables cover the full surface: <code>BP_RUST_PACKAGE</code> selects a workspace member, <code>BP_RUST_WORKSPACE_DIR</code> points to a non-root workspace, <code>BP_RUST_FEATURES</code> enables Cargo features, and <code>BP_RUST_BUILD_PROFILE</code> switches between release and debug. Everything else is inferred.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Scenario Reference</h2>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Scenario 1: Single crate</h3>
+                    <p class="text-gray-300 mb-4">One <code>Cargo.toml</code> at the app root, one binary output. No configuration needed.</p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-3 font-mono text-xs overflow-x-auto text-gray-300 mb-0">
+# skaffold.yaml — no BP_ vars needed
+artifacts:
+  - image: my-rust-service
+    context: .
+    buildpacks:
+      builder: ghcr.io/octopilot/builder-jammy-base:latest
+</pre>
+                </div>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Scenario 2: Workspace monolith (all binaries, one image)</h3>
+                    <p class="text-gray-300 mb-4">Root <code>Cargo.toml</code> with <code>[workspace]</code> and multiple member packages. The buildpack builds all binaries into a single image. Each binary gets its own process type.</p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-3 font-mono text-xs overflow-x-auto text-gray-300 mb-0">
+artifacts:
+  - image: my-platform
+    context: .
+    buildpacks:
+      builder: ghcr.io/octopilot/builder-jammy-base:latest
+      # BP_RUST_WORKSPACE_MODE defaults to "all" — builds all workspace binaries
+</pre>
+                </div>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Scenario 3: Suite build (one service from a workspace)</h3>
+                    <p class="text-gray-300 mb-4">Large workspace, deploy services individually. Set <code>BP_RUST_PACKAGE</code> to build and containerise one package.</p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-3 font-mono text-xs overflow-x-auto text-gray-300 mb-0">
+artifacts:
+  - image: payment-service
+    context: .
+    buildpacks:
+      builder: ghcr.io/octopilot/builder-jammy-base:latest
+      env:
+        - name: BP_RUST_PACKAGE
+          value: payment-service
+</pre>
+                </div>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Scenario 4: Dioxus fullstack</h3>
+                    <p class="text-gray-300 mb-4">Dioxus fullstack apps require a feature flag to compile the backend. <code>BP_RUST_FEATURES</code> passes the flag to <code>cargo build</code>.</p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-3 font-mono text-xs overflow-x-auto text-gray-300 mb-0">
+artifacts:
+  - image: my-dioxus-app
+    context: .
+    buildpacks:
+      builder: ghcr.io/octopilot/builder-jammy-base:latest
+      env:
+        - name: BP_RUST_PACKAGE
+          value: dioxus-app-backend
+        - name: BP_RUST_FEATURES
+          value: dioxus-app-backend/server
+</pre>
+                </div>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Split Images: One Build, Multiple Deployable Images</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    For workspace monoliths where you want to deploy binaries independently, the buildpack supports a split-image mode via the packaging script. The monolith image is built first (all binaries), then split into per-binary images without rebuilding:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+# Build monolith, then split
+./scripts/package.sh \
+  --build-app \
+  --path . \
+  --builder ghcr.io/octopilot/builder-jammy-base:latest \
+  --image my-platform \
+  --split-images
+
+# Produces:
+#   my-platform:latest           (all binaries)
+#   my-platform:payment-service  (payment-service binary only)
+#   my-platform:notification-svc (notification-svc binary only)
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Split images are useful for organisations that want a single CI build step but independent deployment units. Each split image is a valid OCI image with a single process type, deployable independently to Kubernetes or serverless.
+                </p>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Debug Builds and Asset Handling</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    For faster local iteration, <code>BP_RUST_BUILD_PROFILE=debug</code> skips optimisations and compiles in seconds rather than minutes. Use this with <code>op run</code> for local development loops; keep <code>release</code> (the default) for CI.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The buildpack does not copy static assets (the <code>public/</code> directory, <code>config/</code>, etc.) — this is intentional. Asset handling is application-specific. The recommended approach is an inline buildpack defined in <code>project.toml</code> that runs after the Rust build and copies the assets you need. See <a href="/blog/inline-buildpack-assets" class="text-blue-400 hover:text-blue-300">Inline Buildpacks: Custom Asset Handling Without a Dockerfile</a> for the pattern.
+                </p>
+            </section>
+        `
+    },
+    {
+        id: '27',
+        title: 'Inline Buildpacks: Custom Asset Handling Without a Dockerfile',
+        excerpt: 'Cloud Native Buildpacks are intentionally focused — the Rust buildpack builds Rust, the Go buildpack builds Go. They don\'t copy your static assets. The inline buildpack pattern in project.toml lets you add app-specific steps after the language buildpack without writing a custom buildpack or a Dockerfile.',
+        category: 'Developer',
+        readTime: '7 min read',
+        image: '/assets/blog/inline-buildpack.png',
+        author: {
+            name: 'Sam Patel',
+            role: 'DevOps Engineer',
+            avatar: '/assets/blog/avatar-sam.jpg'
+        },
+        slug: 'inline-buildpack-assets',
+        relatedSlugs: ['rust-buildpack-scenarios', 'cloud-native-buildpacks-intro', 'multi-service-monorepo'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Language buildpacks are focused by design. The Rust buildpack builds Rust and sets the <code>web</code> process to the compiled binary. It does not copy your <code>public/</code> directory of static assets, your <code>config/</code> directory of templates, or anything else that the compiled binary needs at runtime. This is correct behaviour — the buildpack cannot know your application's layout — but it means you need a way to add those steps.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        The Cloud Native Buildpacks spec supports <strong>inline buildpacks</strong> defined directly in <code>project.toml</code>. An inline buildpack is a small shell script that runs as part of the build lifecycle, after the language buildpack, with access to the same layer system. No custom buildpack repository, no Dockerfile, no wrapper script required.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Asset Copy Problem</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    A typical Rust web service with a frontend has a structure like this: the <code>api/</code> directory contains the Rust source, and a <code>public/</code> directory at the project root contains compiled frontend assets that the Rust server serves statically. The Rust buildpack compiles the binary and places it at <code>/workspace/bin/my-service</code>. But <code>public/</code> is not in that path — the binary can't find its static files at runtime.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Without inline buildpacks, your options are a Dockerfile (defeating the purpose of buildpacks) or a custom buildpack (significant overhead for a simple file copy). The inline buildpack is the right-sized solution.
+                </p>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The project.toml Inline Pattern</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Create a <code>project.toml</code> in your project root alongside the <code>Cargo.toml</code>. This file is read by the buildpack lifecycle before detection, and can define additional buildpacks to include — including ones defined inline as shell scripts:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+# project.toml
+
+[[io.buildpacks.group]]
+id = "octopilot/rust"
+version = "0.1.5"
+
+[[io.buildpacks.group]]
+id = "myapp/copy-assets"
+[io.buildpacks.group.script]
+api = "0.10"
+inline = """
+set -e
+APP="\${CNB_BUILD_DIR:-/workspace}"
+OUT="\${CNB_OUTPUT_DIR:-/workspace}"
+
+# Copy static assets into the output directory so the binary can find them
+[ -d "\$APP/public" ] && cp -r "\$APP/public" "\$OUT/" || true
+[ -d "\$APP/config" ] && cp -r "\$APP/config" "\$OUT/" || true
+
+echo "Assets copied to output layer"
+"""
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The inline script runs during the <strong>build</strong> phase, after the Rust buildpack has compiled the binary. <code>CNB_BUILD_DIR</code> is the source directory (where your code is). <code>CNB_OUTPUT_DIR</code> is the output layer directory (where the binary and anything it needs at runtime should live). Anything copied to the output layer appears in the final image alongside the binary.
+                </p>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Common Asset Patterns</h2>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <ul class="space-y-4 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-folder text-blue-400 mt-1"></i><div><strong>Static files:</strong> <code>cp -r "$APP/public" "$OUT/"</code> — serve a pre-built frontend from the Rust binary</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-folder text-blue-400 mt-1"></i><div><strong>Config templates:</strong> <code>cp -r "$APP/config" "$OUT/"</code> — TOML, YAML, or JSON config files the binary reads at startup</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-folder text-blue-400 mt-1"></i><div><strong>Migrations:</strong> <code>cp -r "$APP/migrations" "$OUT/"</code> — SQL migration files for embedded database migration tools</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-file text-blue-400 mt-1"></i><div><strong>Environment files:</strong> <code>cp "$APP/.env.example" "$OUT/"</code> — non-secret configuration defaults</div></li>
+                    </ul>
+                </div>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The inline script is plain shell — you can run any command available in the build environment. For more complex needs (running a Node.js build step to compile the frontend before copying), the inline buildpack can call <code>npm run build</code> or any other tool that is installed in the builder image.
+                </p>
+                <div class="p-6 bg-amber-500/10 border-l-4 border-amber-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">When to use a full custom buildpack instead</h4>
+                    <p class="text-gray-300">
+                        Inline buildpacks are ideal for project-specific steps that vary between applications. If you find yourself writing the same inline script in every project, it belongs in a published custom buildpack that can be versioned, tested, and included by reference. The inline approach is the fast path; the custom buildpack is the right path for reusable logic.
+                    </p>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '28',
+        title: 'Frontend + API, One Repo, Two Images: Multi-Service Monorepo Builds',
+        excerpt: 'The most common real-world project structure is a frontend and a backend in the same repository. One skaffold.yaml, two build contexts, two container images — each independently versioned, independently deployable. Here\'s how the pattern works end-to-end with Octopilot.',
+        category: 'Developer',
+        readTime: '9 min read',
+        image: '/assets/blog/multi-service-monorepo.png',
+        author: {
+            name: 'Alex Rivera',
+            role: 'Solo Dev Advocate',
+            avatar: '/assets/blog/avatar-alex.jpg'
+        },
+        slug: 'multi-service-monorepo',
+        relatedSlugs: ['zero-config-ci-detect-contexts', 'cloud-native-buildpacks-intro', 'multi-arch-containers-op-action'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The single-repo, multi-service pattern is ubiquitous. A React frontend served by a Go API. A Next.js app backed by a Python service. A Rust Axum server with a compiled SolidJS frontend. The application is conceptually one product, the code lives in one repository, but deployment requires two independent container images — each with its own build toolchain, its own dependencies, and potentially its own deployment schedule.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        A single <code>skaffold.yaml</code> with two artifact stanzas is all that's needed. <code>detect-contexts</code> reads both contexts, generates a build matrix with two entries, and the <code>lint</code>, <code>test</code>, and build pipeline handle each independently. Both images get separate SLSA attestations.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The skaffold.yaml for Two Services</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    A typical multi-service repository structure places each service in a subdirectory:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+my-app/
+  frontend/          # React or SolidJS source
+    package.json
+    src/
+  api/               # Go or Rust source
+    go.mod  (or Cargo.toml)
+    main.go (or src/main.rs)
+  skaffold.yaml      # defines both build artifacts
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The <code>skaffold.yaml</code> references both contexts. The buildpack auto-detects Node.js from <code>package.json</code> and Go from <code>go.mod</code>:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+apiVersion: skaffold/v4beta1
+kind: Config
+metadata:
+  name: my-app
+build:
+  artifacts:
+    - image: my-app-frontend
+      context: frontend
+      buildpacks:
+        builder: ghcr.io/octopilot/builder-jammy-base:latest
+
+    - image: my-app-api
+      context: api
+      buildpacks:
+        builder: ghcr.io/octopilot/builder-jammy-base:latest
+</pre>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">How detect-contexts Handles Two Build Contexts</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    When <code>detect-contexts</code> reads this <code>skaffold.yaml</code>, it inspects each artifact's context directory and returns a pipeline-context with both languages detected:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+{
+  "languages": ["node", "go"],
+  "node": { "version": "22" },
+  "go":   { "version": "1.25" },
+  "contexts": [
+    { "language": "node", "version": "22",   "context": "frontend/" },
+    { "language": "go",   "version": "1.25", "context": "api/"      }
+  ]
+}
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The <code>lint</code> action installs both Node.js and Go toolchains, running ESLint / Prettier for the frontend and golangci-lint for the API. The <code>test</code> action runs <code>npm test</code> for the frontend and <code>go test ./...</code> for the API. Both sets of checks run in the same job, with the same toolchain setup, driven entirely by the detected context — no manual configuration.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Build pipeline for two images</h3>
+                    <p class="text-gray-300 mb-4">
+                        The <code>op build</code> action builds both images in a single invocation — Skaffold handles the parallelism internally. The resulting <code>build_result.json</code> contains entries for both:
+                    </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-3 font-mono text-xs overflow-x-auto text-gray-300 mb-0">
+{
+  "builds": [
+    { "imageName": "my-app-frontend",
+      "tag": "ghcr.io/my-org/my-app-frontend:v1.2.0@sha256:aaa..." },
+    { "imageName": "my-app-api",
+      "tag": "ghcr.io/my-org/my-app-api:v1.2.0@sha256:bbb..." }
+  ]
+}
+</pre>
+                </div>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Independent Deployment, Same Repository</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Both images share a version tag derived from the git tag — <code>v1.2.0</code> for both frontend and API on the same release. However, they are independently deployable: a frontend-only change can be promoted to production by updating the frontend image tag in the deployment manifest without touching the API deployment. FluxCD's image automation (or any other GitOps tool) handles each image's update lifecycle separately.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Each image also receives its own SLSA attestation. The <code>jq</code> selector in the attestation step identifies each image by name from <code>build_result.json</code>, so the attestation records the specific digest of each independently built artefact.
+                </p>
+                <div class="p-6 bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">Stack support</h4>
+                    <p class="text-gray-300">
+                        This pattern works for any combination of languages supported by the Octopilot builder: React + Go, Next.js + Go, Vue + Python, SolidJS + Rust, Angular + Java, and more. See <a href="/blog/octopilot-stack-support-reference" class="text-blue-400 hover:text-blue-300">Octopilot Stack Support Reference</a> for the full list.
+                    </p>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '30',
+        title: 'Octopilot Stack Support: React, Next.js, Vue, Rust, Go, Python, Spring, and More',
+        excerpt: 'Octopilot builds containers using Cloud Native Buildpacks, which detect your language automatically. This reference covers every supported stack — frontend frameworks, backend languages, full-stack combinations — with links to working sample repositories for each.',
+        category: 'Developer',
+        readTime: '6 min read',
+        image: '/assets/blog/stack-support-reference.png',
+        author: {
+            name: 'Taylor Morgan',
+            role: 'Developer Advocate',
+            avatar: '/assets/blog/avatar-alex.jpg'
+        },
+        slug: 'octopilot-stack-support-reference',
+        relatedSlugs: ['cloud-native-buildpacks-intro', 'multi-service-monorepo', 'octopilot-actions-intro'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The most common question when evaluating a build platform is "does it support my stack?" For Octopilot, the answer is almost certainly yes — the Octopilot builder uses Cloud Native Buildpacks that auto-detect your language and framework from your project files, with no Dockerfile required.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    This post is a practical reference: every supported language and framework, the key detection file, any relevant buildpack environment variables, and links to sample repositories that demonstrate working builds for each combination.
+                </p>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Backend Language Support</h2>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <ul class="space-y-4 text-gray-300">
+                        <li class="flex gap-3">
+                            <i class="fa-brands fa-golang text-cyan-400 mt-1 text-lg"></i>
+                            <div><strong>Go</strong> — Detected from <code>go.mod</code>. Builds all packages in <code>./cmd/...</code> or the main package. Version derived from the <code>go</code> directive in <code>go.mod</code>. Supports: standard APIs (<a href="https://github.com/octopilot/sample-static-go" class="text-blue-400 hover:text-blue-300">net/http</a>, <a href="https://github.com/octopilot/sample-static-go-chi" class="text-blue-400 hover:text-blue-300">Chi</a>, <a href="https://github.com/octopilot/sample-static-go-gin" class="text-blue-400 hover:text-blue-300">Gin</a>, <a href="https://github.com/octopilot/sample-static-go-echo" class="text-blue-400 hover:text-blue-300">Echo</a>).</div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-gear text-orange-400 mt-1"></i>
+                            <div><strong>Rust</strong> — Detected from <code>Cargo.toml</code>. Single crate, workspace, suite, and split-image modes. See <a href="/blog/rust-buildpack-scenarios" class="text-blue-400 hover:text-blue-300">Rust Buildpack Scenarios</a>. Supports: <a href="https://github.com/octopilot/sample-static-rust-axum" class="text-blue-400 hover:text-blue-300">Axum</a>, <a href="https://github.com/octopilot/sample-static-rust-actix" class="text-blue-400 hover:text-blue-300">Actix-web</a>.</div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-brands fa-python text-yellow-400 mt-1"></i>
+                            <div><strong>Python</strong> — Detected from <code>requirements.txt</code>, <code>pyproject.toml</code>, or <code>Pipfile</code>. WSGI/ASGI apps via Gunicorn or Uvicorn. Supports: <a href="https://github.com/octopilot/sample-static-python" class="text-blue-400 hover:text-blue-300">Flask</a>, <a href="https://github.com/octopilot/sample-static-python-django" class="text-blue-400 hover:text-blue-300">Django</a>.</div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-brands fa-java text-red-400 mt-1"></i>
+                            <div><strong>Java / Kotlin</strong> — Detected from <code>pom.xml</code> (Maven) or <code>build.gradle</code>. JVM apps packaged as executable JARs. Supports: <a href="https://github.com/octopilot/sample-static-spring" class="text-blue-400 hover:text-blue-300">Spring Boot (Java)</a>, <a href="https://github.com/octopilot/sample-static-spring-kotlin" class="text-blue-400 hover:text-blue-300">Spring Boot (Kotlin)</a>.</div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-brands fa-microsoft text-blue-300 mt-1"></i>
+                            <div><strong>.NET</strong> — Detected from <code>*.csproj</code>. ASP.NET Core apps, console apps. Supports: <a href="https://github.com/octopilot/sample-static-dotnet" class="text-blue-400 hover:text-blue-300">ASP.NET Core</a>.</div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i class="fa-solid fa-gem text-red-300 mt-1"></i>
+                            <div><strong>Ruby</strong> — Detected from <code>Gemfile</code>. Rack-based apps via Puma. Supports: <a href="https://github.com/octopilot/sample-static-ruby" class="text-blue-400 hover:text-blue-300">Sinatra / Rails</a>.</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <h2 class="text-3xl font-bold text-white mb-6 mt-8">Frontend Framework Support</h2>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <p class="text-gray-300 mb-4">Frontend frameworks are detected from <code>package.json</code>. The Node.js buildpack runs the build script and produces a static build output, which is then served by the backend or a static server.</p>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-brands fa-react text-cyan-400 mt-1"></i><div><strong>React</strong> — <a href="https://github.com/octopilot/sample-react-go" class="text-blue-400 hover:text-blue-300">React + Go</a>, <a href="https://github.com/octopilot/sample-react-node" class="text-blue-400 hover:text-blue-300">React + Node</a>, <a href="https://github.com/octopilot/sample-react-python" class="text-blue-400 hover:text-blue-300">React + Python</a>, <a href="https://github.com/octopilot/sample-react-dotnet" class="text-blue-400 hover:text-blue-300">React + .NET</a></div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-n text-white mt-1"></i><div><strong>Next.js</strong> — SSR and static export modes. <a href="https://github.com/octopilot/sample-next-go" class="text-blue-400 hover:text-blue-300">Next.js + Go</a></div></li>
+                        <li class="flex gap-3"><i class="fa-brands fa-vuejs text-green-400 mt-1"></i><div><strong>Vue</strong> — <a href="https://github.com/octopilot/sample-vue-go" class="text-blue-400 hover:text-blue-300">Vue + Go</a></div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-s text-orange-400 mt-1"></i><div><strong>Svelte</strong> — <a href="https://github.com/octopilot/sample-svelte-go" class="text-blue-400 hover:text-blue-300">Svelte + Go</a></div></li>
+                        <li class="flex gap-3"><i class="fa-brands fa-angular text-red-500 mt-1"></i><div><strong>Angular</strong> — <a href="https://github.com/octopilot/sample-angular-go" class="text-blue-400 hover:text-blue-300">Angular + Go</a></div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-circle text-blue-400 mt-1"></i><div><strong>SolidJS</strong> — <a href="https://github.com/octopilot/sample-solid-go" class="text-blue-400 hover:text-blue-300">SolidJS + Go</a></div></li>
+                        <li class="flex gap-3"><i class="fa-brands fa-node-js text-green-300 mt-1"></i><div><strong>Node.js</strong> — <a href="https://github.com/octopilot/sample-static-node" class="text-blue-400 hover:text-blue-300">Express</a>, <a href="https://github.com/octopilot/sample-static-node-fastify" class="text-blue-400 hover:text-blue-300">Fastify</a>, <a href="https://github.com/octopilot/sample-static-node-ts" class="text-blue-400 hover:text-blue-300">TypeScript</a></div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Adding a New Stack</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    If your stack isn't listed, check whether it's supported by the <a href="https://paketo.io/docs/concepts/buildpacks/" class="text-blue-400 hover:text-blue-300">Paketo buildpack ecosystem</a> — there are buildpacks for dozens of languages beyond the ones bundled in the Octopilot builder. Adding a Paketo buildpack to the builder is a single line in <code>builder.toml</code>.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    For languages without buildpack support, the Octopilot pipeline works with Dockerfiles too — replace the <code>buildpacks:</code> stanza in <code>skaffold.yaml</code> with <code>docker: { dockerfile: Dockerfile }</code>. You lose automatic base image rebasing, but gain full Dockerfile flexibility.
+                </p>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Quick Reference Table</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-gray-300 border-collapse">
+                        <thead><tr class="border-b border-octo-border text-white">
+                            <th class="text-left py-3 pr-4">Stack</th>
+                            <th class="text-left py-3 pr-4">Detection File</th>
+                            <th class="text-left py-3">Sample Repo</th>
+                        </tr></thead>
+                        <tbody class="divide-y divide-octo-border/50">
+                            <tr><td class="py-2 pr-4">Go (net/http)</td><td class="py-2 pr-4"><code>go.mod</code></td><td class="py-2"><code>sample-static-go</code></td></tr>
+                            <tr><td class="py-2 pr-4">Go + Chi</td><td class="py-2 pr-4"><code>go.mod</code></td><td class="py-2"><code>sample-static-go-chi</code></td></tr>
+                            <tr><td class="py-2 pr-4">Go + Gin</td><td class="py-2 pr-4"><code>go.mod</code></td><td class="py-2"><code>sample-static-go-gin</code></td></tr>
+                            <tr><td class="py-2 pr-4">Go + Echo</td><td class="py-2 pr-4"><code>go.mod</code></td><td class="py-2"><code>sample-static-go-echo</code></td></tr>
+                            <tr><td class="py-2 pr-4">Rust + Axum</td><td class="py-2 pr-4"><code>Cargo.toml</code></td><td class="py-2"><code>sample-static-rust-axum</code></td></tr>
+                            <tr><td class="py-2 pr-4">Rust + Actix</td><td class="py-2 pr-4"><code>Cargo.toml</code></td><td class="py-2"><code>sample-static-rust-actix</code></td></tr>
+                            <tr><td class="py-2 pr-4">Python / Flask</td><td class="py-2 pr-4"><code>requirements.txt</code></td><td class="py-2"><code>sample-static-python</code></td></tr>
+                            <tr><td class="py-2 pr-4">Python / Django</td><td class="py-2 pr-4"><code>requirements.txt</code></td><td class="py-2"><code>sample-static-python-django</code></td></tr>
+                            <tr><td class="py-2 pr-4">Spring Boot (Java)</td><td class="py-2 pr-4"><code>pom.xml</code></td><td class="py-2"><code>sample-static-spring</code></td></tr>
+                            <tr><td class="py-2 pr-4">Spring Boot (Kotlin)</td><td class="py-2 pr-4"><code>build.gradle</code></td><td class="py-2"><code>sample-static-spring-kotlin</code></td></tr>
+                            <tr><td class="py-2 pr-4">.NET (ASP.NET Core)</td><td class="py-2 pr-4"><code>*.csproj</code></td><td class="py-2"><code>sample-static-dotnet</code></td></tr>
+                            <tr><td class="py-2 pr-4">Ruby</td><td class="py-2 pr-4"><code>Gemfile</code></td><td class="py-2"><code>sample-static-ruby</code></td></tr>
+                            <tr><td class="py-2 pr-4">React + Go</td><td class="py-2 pr-4"><code>package.json</code> + <code>go.mod</code></td><td class="py-2"><code>sample-react-go</code></td></tr>
+                            <tr><td class="py-2 pr-4">Next.js + Go</td><td class="py-2 pr-4"><code>package.json</code> + <code>go.mod</code></td><td class="py-2"><code>sample-next-go</code></td></tr>
+                            <tr><td class="py-2 pr-4">Vue + Go</td><td class="py-2 pr-4"><code>package.json</code> + <code>go.mod</code></td><td class="py-2"><code>sample-vue-go</code></td></tr>
+                            <tr><td class="py-2 pr-4">SolidJS + Go</td><td class="py-2 pr-4"><code>package.json</code> + <code>go.mod</code></td><td class="py-2"><code>sample-solid-go</code></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '31',
+        title: 'Local HTTPS Registry: Solving TLS for Docker Development',
+        excerpt: 'Running a local container registry during development sounds simple until you need HTTPS — which Skaffold, Buildpacks, and many tools require. registry-tls gives you a local HTTPS registry in one Docker command: Envoy handles TLS, self-signed certs are generated automatically, and it runs on port 5001.',
+        category: 'Developer',
+        readTime: '6 min read',
+        image: '/assets/blog/local-tls-registry.png',
+        author: {
+            name: 'Alex Rivera',
+            role: 'Solo Dev Advocate',
+            avatar: '/assets/blog/avatar-alex.jpg'
+        },
+        slug: 'local-https-registry',
+        relatedSlugs: ['cloud-native-buildpacks-intro', 'multi-arch-containers-op-action', 'octopilot-actions-intro'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Local container registry for development: easy. Local container registry with HTTPS: surprisingly annoying. Most development tools that interact with container images — Skaffold, Cloud Native Buildpacks, cosign, crane — expect registries to either be well-known public registries with valid TLS or local registries explicitly marked as insecure. Marking a registry as insecure requires editing Docker's daemon configuration and restarting Docker Desktop. It's a workstation configuration change that can affect other projects and is easy to forget to undo.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        <code>registry-tls</code> is a single container that runs a standard Docker registry behind an Envoy proxy with auto-generated self-signed TLS on port 5001. No Docker Compose, no separate TLS setup, no daemon config changes — just <code>docker run -p 5001:5001 ghcr.io/octopilot/registry-tls:latest</code>.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Local Registry TLS Problem</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    A plain <code>docker run -p 5000:5000 registry:2</code> gives you an HTTP registry. For local development where you're just pushing and pulling manually, this works. When you introduce tools that have opinions about TLS — Skaffold's local dev loop, Buildpack lifecycle push, or any tool that calls the OCI distribution spec directly — the HTTP registry becomes a source of errors that are difficult to debug because they manifest as "connection refused" or "certificate error" rather than "this registry doesn't support TLS."
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The standard advice is to add <code>"insecure-registries": ["localhost:5000"]</code> to the Docker daemon configuration. This works, but it's a global setting that applies to all Docker operations, requires a daemon restart, and is the kind of workstation state that causes "works on my machine" problems when someone else doesn't have it configured.
+                </p>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Running the TLS Registry</h2>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+# Start the registry (certs auto-generated on first run)
+docker run -p 5001:5001 ghcr.io/octopilot/registry-tls:latest
+
+# With persistent storage (survives container restarts)
+docker run -p 5001:5001 -v registry-data:/var/lib/registry \
+  ghcr.io/octopilot/registry-tls:latest
+
+# Push an image (add --insecure-skip-verify or trust the cert first)
+docker push localhost:5001/my-image:dev
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The image is multi-arch: <code>linux/amd64</code>, <code>linux/arm64</code> (Apple Silicon), and <code>linux/arm/v7</code>. On Apple Silicon, Docker Desktop pulls the arm64 variant automatically.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">Trusting the self-signed certificate</h3>
+                    <p class="text-gray-300 mb-4">The registry generates a self-signed cert at startup. To avoid TLS warnings:</p>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-brands fa-apple text-gray-300 mt-1"></i><div><strong>macOS:</strong> Copy the cert from the container (<code>docker cp &lt;container&gt;:/etc/envoy/certs/tls.crt .</code>) and add it to Keychain, setting SSL trust to "Always Trust"</div></li>
+                        <li class="flex gap-3"><i class="fa-brands fa-linux text-yellow-400 mt-1"></i><div><strong>Linux:</strong> Copy the cert to <code>/usr/local/share/ca-certificates/</code> and run <code>update-ca-certificates</code></div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-whale text-blue-400 mt-1"></i><div><strong>Docker daemon only:</strong> Add <code>"insecure-registries": ["localhost:5001"]</code> to Docker Engine settings if you only need Docker push/pull to work (not other tools)</div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Using with op run</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The <code>registry-tls</code> image is the default local registry used by <code>op run</code> for local development builds. Skaffold's local build loop pushes images to <code>localhost:5001</code>, which uses the registry-tls container. This means your local builds go through the same HTTPS push path as your CI builds — local and CI behaviour are consistent.
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+# Start the local registry
+docker run -d -p 5001:5001 --name local-registry \
+  ghcr.io/octopilot/registry-tls:latest
+
+# Run your application locally with Octopilot
+op run --repo localhost:5001/my-org
+# Skaffold builds → pushes to localhost:5001 → runs locally
+</pre>
+            </section>
+        `
+    },
+    {
+        id: '32',
+        title: 'kenv: Extract Kubernetes ConfigMap and Secret Values Into Your Local Environment',
+        excerpt: 'Local development against a remote Kubernetes cluster often means needing the same configuration values the cluster has — database hostnames, feature flags, service URLs. kenv extracts them from a Kustomize-built environment and writes them to a .env file your application can use directly.',
+        category: 'Developer',
+        readTime: '5 min read',
+        image: '/assets/blog/kenv-tool.png',
+        author: {
+            name: 'Chris Anderson',
+            role: 'Platform Engineer',
+            avatar: '/assets/blog/avatar-chris.jpg'
+        },
+        slug: 'kenv-kubernetes-env-extraction',
+        relatedSlugs: ['cicd-secret-injection', 'repo-local-encryption', 'octopilot-subscription-model'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    A persistent friction point in local development is configuration parity. Your Kubernetes deployment reads database hostnames, feature flag values, and service endpoint URLs from ConfigMaps. When you run the same service locally, you either hardcode those values in a <code>.env</code> file (which drifts from the cluster config) or you spend time manually copying values from <code>kubectl get configmap -o yaml</code> output. Neither is satisfying.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        <code>kenv</code> runs Kustomize against a specified environment directory and extracts the resulting ConfigMap and Secret values into a <code>.env</code> file (or other formats). Your local environment gets the same values the cluster uses — from the same source of truth.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The Configuration Parity Problem</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Kubernetes applications typically read their configuration from environment variables injected from ConfigMaps and Secrets. The Kustomize overlays that define each environment (dev, staging, production) specify the exact values for each key. This is the cluster's authoritative configuration.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Local development usually means a manually maintained <code>.env</code> file that approximates this configuration. When a new ConfigMap key is added, or an existing value is changed for the staging environment, the developer's local <code>.env</code> file falls out of sync. The mismatch often only surfaces when testing a specific code path that uses the new or changed value.
+                </p>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Using kenv</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    <code>kenv</code> takes a Kustomize base or overlay path, runs <code>kustomize build</code> against it, and extracts the ConfigMap and Secret values from the resulting manifests:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+# Build and install
+go build -ldflags '-s -w' -o kenv ./main/
+
+# Extract configuration from the staging overlay into a .env file
+./kenv prepare \
+  -i waas-config/environments/staging \
+  -k $SOPS_AGE_KEY \
+  -o dotenv > .env
+
+# Your application reads the .env file as normal
+# DATABASE_HOST, FEATURE_FLAGS_URL, etc. are now set from the cluster config
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The <code>-i</code> flag specifies the Kustomize input directory (the environment overlay). The <code>-k</code> flag provides the decryption key for SOPS-encrypted values in the Secrets. The <code>-o dotenv</code> output format produces a standard <code>KEY=value</code> file compatible with <code>dotenv</code>, Docker's <code>--env-file</code>, and most development servers.
+                </p>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Workflow Integration</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The typical workflow is to add a <code>kenv prepare</code> invocation to your local development script or Justfile, run it before starting the development server, and <code>.gitignore</code> the generated <code>.env</code> file:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+# In your Justfile
+dev:
+  kenv prepare -i config/environments/local -k $SOPS_AGE_KEY -o dotenv > .env
+  go run ./cmd/server
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Because <code>kenv</code> reads from the same Kustomize overlays that define the cluster configuration, the local environment automatically picks up new keys and changed values when the overlay is updated — without manual <code>.env</code> maintenance.
+                </p>
+                <div class="p-6 bg-amber-500/10 border-l-4 border-amber-500 rounded-r-lg mt-6">
+                    <h4 class="text-white font-bold mb-2">Note on secrets</h4>
+                    <p class="text-gray-300">
+                        <code>kenv</code> decrypts SOPS-encrypted Secrets to extract their values. The resulting <code>.env</code> file contains plaintext values — treat it with the same care as a <code>.env</code> file containing credentials. Ensure it is in <code>.gitignore</code> and not committed to version control.
+                    </p>
+                </div>
+            </section>
+        `
+    },
+    {
+        id: '33',
+        title: 'Keyless Kubernetes: OIDC kubectl Context in GitHub Actions',
+        excerpt: 'Storing a kubeconfig or long-lived service account token as a GitHub Actions secret is a security liability: the credential is static, hard to rotate, and scoped too broadly. OIDC-based kubectl authentication gives each workflow run a short-lived token that expires automatically.',
+        category: 'Enterprise',
+        readTime: '8 min read',
+        image: '/assets/blog/oidc-kubectl.png',
+        author: {
+            name: 'Rachel Thompson',
+            role: 'Security Architect',
+            avatar: '/assets/blog/avatar-rachel.jpg'
+        },
+        slug: 'oidc-kubectl-github-actions',
+        relatedSlugs: ['network-security-cloud-runners', 'cicd-secret-injection', 'least-privilege-access'],
+        content: `
+            <section id="intro" class="mb-12">
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The standard approach to Kubernetes access in GitHub Actions is to store a kubeconfig or service account token as a repository secret. The workflow decodes it, writes it to <code>~/.kube/config</code>, and runs <code>kubectl</code> commands. This works but carries significant security implications: the credential is long-lived (often indefinitely), statically scoped, stored in GitHub's secret store, and rotated manually if at all. A leaked secret provides cluster access until someone notices and rotates it.
+                </p>
+                <div class="p-6 bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg mb-8">
+                    <h4 class="text-white font-bold mb-2">Key Takeaway</h4>
+                    <p class="text-gray-300">
+                        OpenID Connect (OIDC) eliminates the need for a stored credential entirely. GitHub Actions can request a short-lived OIDC token for each workflow run. Your Kubernetes cluster — or the OIDC provider in front of it — validates the token and grants access. The token expires when the workflow ends. Nothing to store, nothing to rotate, nothing to leak.
+                    </p>
+                </div>
+            </section>
+
+            <section id="problem" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Why Long-Lived Credentials Are a Problem</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    Static credentials — kubeconfig files, service account tokens, API keys — share a common failure mode: they outlive the context in which they were created. A deployment token created for a specific workflow run has no reason to exist once that run completes. But tokens created as repository secrets exist until manually deleted, regardless of whether the workflow that uses them still exists.
+                </p>
+                <div class="bg-octo-darker border border-octo-border rounded-xl p-6 mb-8">
+                    <h3 class="text-white font-bold text-xl mb-4">The static credential threat model</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div>A repository is made public accidentally — the kubeconfig secret is now in GitHub's logs or exposed to workflows from forked PRs</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div>A developer with repository access leaves — their access to the CI credential persists until someone audits and rotates it</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div>The service account token is scoped to "cluster-admin" because it was created quickly — nobody has reviewed the scope since</div></li>
+                        <li class="flex gap-3"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-1"></i><div>A supply chain attack on a GitHub Action uses the workflow's secrets environment to exfiltrate credentials</div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="solution" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">The OIDC Token Flow</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    GitHub Actions supports OIDC token issuance natively. When a workflow has the <code>id-token: write</code> permission, GitHub's OIDC provider issues a JWT token for that workflow run. The token contains verifiable claims: the repository name, the branch, the workflow path, and the run ID. It is signed by GitHub and valid only for the duration of the workflow.
+                </p>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    For clusters with an OIDC authentication webhook configured, or for cloud-managed Kubernetes services that support OIDC trust (EKS, GKE with Workload Identity, AKS with Azure AD), the workflow presents this token to the cluster and receives cluster access scoped to the claims in the token. The <code>oidc-set-context</code> action handles this exchange:
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write    # required to request an OIDC token
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set kubectl context via OIDC
+        uses: octopilot/actions/oidc-set-context@main
+        with:
+          oidc_url: https://your-oidc-provider.example.com/token
+          oidc_username: \${{ secrets.OIDC_USERNAME }}
+          oidc_password: \${{ secrets.OIDC_PASSWORD }}
+          k8s_url: https://your-cluster.example.com
+
+      - name: Deploy
+        run: kubectl apply -f k8s/
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    The action calls the OIDC provider URL with the provided credentials, receives a short-lived token, and configures <code>kubectl</code> to use it. The token is valid only for this workflow run. When the workflow ends, the token expires — no manual rotation required, no persistent credential to protect.
+                </p>
+            </section>
+
+            <section id="implementation" class="mb-12">
+                <h2 class="text-3xl font-bold text-white mb-6">Combining with Network Allowlisting</h2>
+                <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                    For clusters with a private API server (no public endpoint), OIDC authentication solves the credential problem but not the network access problem. The workflow still needs to reach the cluster API. This is where the <code>gke-allow-runner</code>, <code>eks-allow-runner</code>, or <code>aks-allow-runner</code> actions come in — they add the runner's ephemeral IP to the cluster's authorised networks before the deployment step and remove it in a step marked <code>if: always()</code> afterwards.
+                </p>
+<pre class="bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-sm overflow-x-auto text-gray-300">
+steps:
+  - name: Allow runner IP
+    uses: octopilot/actions/network-access/gke-allow-runner@main
+    with:
+      project_id: my-gcp-project
+      cluster_name: production
+      cluster_region: europe-west2
+
+  - name: Set kubectl context via OIDC
+    uses: octopilot/actions/oidc-set-context@main
+    with:
+      oidc_url: \${{ secrets.OIDC_URL }}
+      oidc_username: \${{ secrets.OIDC_USERNAME }}
+      oidc_password: \${{ secrets.OIDC_PASSWORD }}
+      k8s_url: \${{ secrets.K8S_URL }}
+
+  - name: Deploy
+    run: kubectl apply -f k8s/
+
+  - name: Remove runner IP
+    if: always()
+    uses: octopilot/actions/network-access/gke-allow-runner@main
+    with:
+      project_id: my-gcp-project
+      cluster_name: production
+      cluster_region: europe-west2
+      remove: true
+</pre>
+                <p class="text-gray-300 text-lg leading-relaxed mt-6">
+                    The combination of OIDC authentication (no stored credential) and ephemeral network allowlisting (no persistent firewall hole) gives you a deployment workflow with a minimal, time-bound security footprint — the workflow has network access and cluster access only for the duration of its execution.
+                </p>
+            </section>
+        `
     }
 ];
