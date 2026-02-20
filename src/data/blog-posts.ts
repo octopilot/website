@@ -13,7 +13,8 @@ export interface BlogPost {
     painPoint?: string;
     solution?: string;
     slug: string;
-    content?: string; // Full HTML content for the blog post
+    relatedSlugs?: string[]; // Curated related post slugs, shown in sidebar
+    content?: string;
 }
 
 export const blogPosts: BlogPost[] = [
@@ -31,6 +32,7 @@ export const blogPosts: BlogPost[] = [
         },
         painPoint: 'No encryption, secrets in Git history, impossible to rotate without breaking deployments',
         slug: 'env-file-trap',
+        relatedSlugs: ['repo-local-encryption', 'cicd-secret-injection', 'multi-team-workflows'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -124,6 +126,7 @@ export const blogPosts: BlogPost[] = [
         },
         solution: 'Repo-scoped GPG keys, no centralization, secrets stay with code, GitOps-native',
         slug: 'repo-local-encryption',
+        relatedSlugs: ['env-file-trap', 'least-privilege-access', 'cicd-secret-injection'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -199,6 +202,7 @@ sops:
         },
         painPoint: 'CI/CD secrets in repo settings create vendor lock-in, no audit trail, manual rotation',
         slug: 'cicd-secret-injection',
+        relatedSlugs: ['env-file-trap', 'repo-local-encryption', 'octopilot-actions-intro'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -278,6 +282,7 @@ steps:
         },
         painPoint: 'Everyone gets all secrets or nobody gets any—no granular access control',
         slug: 'multi-team-workflows',
+        relatedSlugs: ['least-privilege-access', 'key-rotation-strategies', 'multi-product-verticals'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -359,6 +364,7 @@ access_rules:
         },
         solution: 'Repo-scoped keys, role-based GPG key distribution, zero-trust by default',
         slug: 'least-privilege-access',
+        relatedSlugs: ['multi-team-workflows', 'repo-local-encryption', 'compliance-audit-requirements'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -418,6 +424,7 @@ access_rules:
         },
         painPoint: 'Manual rotation takes hours, requires coordination, high risk of breaking production',
         slug: 'key-rotation-strategies',
+        relatedSlugs: ['least-privilege-access', 'incident-response-at-scale', 'compliance-audit-requirements'],
         content: `
              <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -485,6 +492,7 @@ rotation:
         },
         painPoint: 'Central vault creates cross-contamination risk, compliance nightmare, single point of failure',
         slug: 'multi-product-verticals',
+        relatedSlugs: ['compliance-audit-requirements', 'least-privilege-access', 'incident-response-at-scale'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -538,6 +546,7 @@ rotation:
         },
         solution: 'GPG signatures create tamper-proof audit logs, per-repo isolation satisfies data residency',
         slug: 'compliance-audit-requirements',
+        relatedSlugs: ['multi-product-verticals', 'key-rotation-strategies', 'incident-response-at-scale'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -577,6 +586,7 @@ rotation:
         },
         painPoint: 'Central vault breach exposes all secrets, rotation takes days, blast radius is catastrophic',
         slug: 'incident-response-at-scale',
+        relatedSlugs: ['key-rotation-strategies', 'compliance-audit-requirements', 'multi-product-verticals'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -614,6 +624,7 @@ rotation:
             avatar: '/assets/blog/avatar-alex.jpg'
         },
         slug: 'octopilot-actions-intro',
+        relatedSlugs: ['zero-config-ci-detect-contexts', 'lint-test-without-scaffolding', 'multi-arch-containers-op-action'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -736,6 +747,7 @@ jobs:
             avatar: '/assets/blog/avatar-sam.jpg'
         },
         slug: 'zero-config-ci-detect-contexts',
+        relatedSlugs: ['octopilot-actions-intro', 'lint-test-without-scaffolding', 'composable-cicd-composite-actions'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -855,6 +867,7 @@ jobs:
             avatar: '/assets/blog/avatar-chris.jpg'
         },
         slug: 'lint-test-without-scaffolding',
+        relatedSlugs: ['zero-config-ci-detect-contexts', 'octopilot-actions-intro', 'composable-cicd-composite-actions'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -1001,6 +1014,7 @@ jobs:
             avatar: '/assets/blog/avatar-jordan.jpg'
         },
         slug: 'multi-arch-containers-op-action',
+        relatedSlugs: ['octopilot-actions-intro', 'automated-release-workflow', 'ephemeral-environments-pr'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -1119,6 +1133,7 @@ ghcr.io/my-org/my-app:v1.0.0_linux_amd64@sha256:...
             avatar: '/assets/blog/avatar-maya.jpg'
         },
         slug: 'automated-release-workflow',
+        relatedSlugs: ['multi-arch-containers-op-action', 'octopilot-actions-intro', 'cicd-secret-injection'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -1265,6 +1280,7 @@ jobs:
             avatar: '/assets/blog/avatar-alex.jpg'
         },
         slug: 'ephemeral-environments-pr',
+        relatedSlugs: ['multi-arch-containers-op-action', 'octopilot-actions-intro', 'automated-release-workflow'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -1379,6 +1395,7 @@ jobs:
             avatar: '/assets/blog/avatar-rachel.jpg'
         },
         slug: 'network-security-cloud-runners',
+        relatedSlugs: ['composable-cicd-composite-actions', 'cicd-secret-injection', 'least-privilege-access'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">
@@ -1498,6 +1515,7 @@ jobs:
             avatar: '/assets/blog/avatar-lisa.jpg'
         },
         slug: 'composable-cicd-composite-actions',
+        relatedSlugs: ['zero-config-ci-detect-contexts', 'lint-test-without-scaffolding', 'octopilot-actions-intro'],
         content: `
             <section id="intro" class="mb-12">
                 <p class="text-gray-300 text-lg leading-relaxed mb-6">

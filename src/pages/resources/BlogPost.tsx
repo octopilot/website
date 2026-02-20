@@ -151,10 +151,17 @@ const BlogPost: Component = () => {
                                             Related Articles
                                         </h3>
                                         <div class="space-y-6">
-                                            {blogPosts
-                                                .filter(post => post.id !== p().id)
-                                                .slice(0, 3)
-                                                .map(related => (
+                                            {(p().relatedSlugs && p().relatedSlugs!.length > 0
+                                                // Curated: resolve slugs in declared order
+                                                ? p().relatedSlugs!
+                                                    .map(slug => blogPosts.find(b => b.slug === slug))
+                                                    .filter((b): b is typeof blogPosts[0] => b !== undefined)
+                                                    .slice(0, 3)
+                                                // Fallback: same category, excluding current post
+                                                : blogPosts
+                                                    .filter(post => post.id !== p().id && post.category === p().category)
+                                                    .slice(0, 3)
+                                            ).map(related => (
                                                     <A href={`/blog/${related.slug}`} class="block group">
                                                         <div class="h-32 mb-3 overflow-hidden rounded-lg bg-slate-800 relative">
                                                             <img
