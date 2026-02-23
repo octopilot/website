@@ -1,8 +1,10 @@
 import { type Component, createSignal, Show } from 'solid-js';
 import { A } from '@solidjs/router';
+import { usePricingVisible } from '../../lib/pricingGate';
 
 const Header: Component = () => {
     const [isMenuOpen, setIsMenuOpen] = createSignal(false);
+    const pricingVisible = usePricingVisible();
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen());
     const closeMenu = () => setIsMenuOpen(false);
@@ -27,7 +29,9 @@ const Header: Component = () => {
                             <A href="/product/governance" class="text-gray-400 hover:text-white transition-colors font-medium" activeClass="text-white border-b-2 border-octo-accent pb-1">Governance</A>
                             <A href="/docs" class="text-gray-400 hover:text-white transition-colors font-medium" activeClass="text-white border-b-2 border-octo-accent pb-1">Docs</A>
                             <A href="/blog" class="text-gray-400 hover:text-white transition-colors font-medium" activeClass="text-white border-b-2 border-octo-accent pb-1">Blog</A>
-                            <A href="/pricing" class="text-gray-400 hover:text-white transition-colors font-medium" activeClass="text-white border-b-2 border-octo-accent pb-1">Pricing</A>
+                            <Show when={pricingVisible()}>
+                                <A href="/pricing" class="text-gray-400 hover:text-white transition-colors font-medium" activeClass="text-white border-b-2 border-octo-accent pb-1">Pricing</A>
+                            </Show>
                         </nav>
                     </div>
 
@@ -65,7 +69,9 @@ const Header: Component = () => {
                             <A href="/product/governance" class="text-lg font-medium text-gray-300 hover:text-white py-2 border-b border-gray-800" onClick={closeMenu}>Governance</A>
                             <A href="/docs" class="text-lg font-medium text-gray-300 hover:text-white py-2 border-b border-gray-800" onClick={closeMenu}>Docs</A>
                             <A href="/blog" class="text-lg font-medium text-gray-300 hover:text-white py-2 border-b border-gray-800" onClick={closeMenu}>Blog</A>
-                            <A href="/pricing" class="text-lg font-medium text-gray-300 hover:text-white py-2 border-b border-gray-800" onClick={closeMenu}>Pricing</A>
+                            <Show when={pricingVisible()}>
+                                <A href="/pricing" class="text-lg font-medium text-gray-300 hover:text-white py-2 border-b border-gray-800" onClick={closeMenu}>Pricing</A>
+                            </Show>
                         </nav>
                         <div class="flex flex-col space-y-4 pt-4">
                             <a href="https://github.com/octopilot" target="_blank" class="flex items-center justify-center px-5 py-3 text-gray-300 hover:text-white border border-gray-700 rounded-lg font-medium">

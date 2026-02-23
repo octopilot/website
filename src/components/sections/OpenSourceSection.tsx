@@ -1,6 +1,10 @@
 import type { Component } from 'solid-js';
+import { Show } from 'solid-js';
+import { A } from '@solidjs/router';
+import { usePricingVisible } from '../../lib/pricingGate';
 
 const OpenSourceSection: Component = () => {
+    const pricingVisible = usePricingVisible();
     return (
         <section id="open-source-section" class="py-24 border-b border-octo-border">
             <div class="max-w-[1200px] mx-auto px-8">
@@ -86,9 +90,11 @@ const OpenSourceSection: Component = () => {
                                     <p class="text-octo-accent text-sm font-mono">Proprietary SaaS</p>
                                 </div>
                             </div>
-                            <a href="#" class="px-4 py-2 bg-octo-accent/20 hover:bg-octo-accent/30 border border-octo-accent/40 text-octo-accent rounded-lg text-sm font-medium transition-colors">
-                                View Pricing
-                            </a>
+                            <Show when={pricingVisible()}>
+                                <A href="/pricing" class="px-4 py-2 bg-octo-accent/20 hover:bg-octo-accent/30 border border-octo-accent/40 text-octo-accent rounded-lg text-sm font-medium transition-colors inline-block">
+                                    View Pricing
+                                </A>
+                            </Show>
                         </div>
                         <div class="mb-6">
                             <h4 class="text-white font-bold mb-3 flex items-center">

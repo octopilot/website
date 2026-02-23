@@ -1,7 +1,10 @@
 import type { Component } from 'solid-js';
+import { Show } from 'solid-js';
 import { A } from '@solidjs/router';
+import { usePricingVisible } from '../../lib/pricingGate';
 
 const Footer: Component = () => {
+    const pricingVisible = usePricingVisible();
     return (
         <footer id="footer" class="bg-octo-dark border-t border-octo-border">
             <div class="max-w-[1440px] mx-auto px-8 py-16">
@@ -34,7 +37,7 @@ const Footer: Component = () => {
                             <li><A href="/product/architecture" class="text-gray-400 hover:text-white transition-colors text-sm">Architecture</A></li>
                             <li><A href="/product/governance" class="text-gray-400 hover:text-white transition-colors text-sm">Governance</A></li>
                             <li><A href="/product/security" class="text-gray-400 hover:text-white transition-colors text-sm">Security Model</A></li>
-                            <li><A href="/pricing" class="text-gray-400 hover:text-white transition-colors text-sm">Pricing</A></li>
+                            <Show when={pricingVisible()}><li><A href="/pricing" class="text-gray-400 hover:text-white transition-colors text-sm">Pricing</A></li></Show>
                             <li><a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">Roadmap</a></li>
                         </ul>
                     </div>

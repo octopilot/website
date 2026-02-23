@@ -1,8 +1,10 @@
 /* @refresh reload */
 import { render } from 'solid-js/web'
 import { Router, Route, useNavigate } from '@solidjs/router';
+import { createEffect, Show } from 'solid-js';
 import './index.css'
 import App from './App.tsx'
+import { usePricingVisible } from './lib/pricingGate';
 
 // Pages
 import Home from './pages/Home';
@@ -43,10 +45,20 @@ const DocsRedirect = () => {
     return null;
 };
 
+/** Renders Pricing only when the pricing gate is open (?show_pricing=1); otherwise redirects to home. */
+const PricingGate = () => {
+    const navigate = useNavigate();
+    const pricingVisible = usePricingVisible();
+    createEffect(() => {
+        if (!pricingVisible()) navigate('/', { replace: true });
+    });
+    return <Show when={pricingVisible()}><Pricing /></Show>;
+};
+
 render(() => (
     <Router root={App}>
         <Route path="/" component={Home} />
-        <Route path="/pricing" component={Pricing} />
+        <Route path="/pricing" component={PricingGate} />
         <Route path="/product/architecture" component={Architecture} />
         <Route path="/product/security" component={Security} />
         <Route path="/product/governance" component={Governance} />
