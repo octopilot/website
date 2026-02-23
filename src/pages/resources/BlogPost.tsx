@@ -8,11 +8,13 @@ import CtaSection from '../../components/sections/CtaSection';
 const BlogPost: Component = () => {
     const params = useParams();
 
-    // Find the post based on the slug
-    // For now we check both ID (legacy) and slug
-    const post = () => blogPosts.find(p => p.slug === params.slug || p.id === params.slug);
-
+    // Key by slug so navigating between related posts (param-to-param) remounts and updates the view.
+    // Same pattern as docs github-actions: router reuses the same route; keying forces fresh content.
     return (
+        <Show when={params.slug} keyed>
+            {(slug) => {
+                const post = () => blogPosts.find(p => p.slug === slug || p.id === slug);
+                return (
         <Show when={post()} fallback={
             <div class="py-32 text-center text-white">
                 <h1 class="text-4xl font-bold mb-4">Post not found</h1>
@@ -188,6 +190,9 @@ const BlogPost: Component = () => {
                     <CtaSection />
                 </article>
             )}
+        </Show>
+                );
+            }}
         </Show>
     );
 };

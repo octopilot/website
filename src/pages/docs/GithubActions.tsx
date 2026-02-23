@@ -1,4 +1,5 @@
 import type { Component } from 'solid-js';
+import { A } from '@solidjs/router';
 import PageMeta from '../../components/seo/PageMeta';
 import DocsCTA from '../../components/docs/DocsCTA';
 import DocsLayout from '../../components/docs/DocsLayout';
@@ -38,7 +39,7 @@ const GithubActions: Component = () => {
 
                     <div class="space-y-6">
                         {githubActions.map(action => (
-                            <a href={`/docs/github-actions/${action.id}`} class="block group">
+                            <A href={`/docs/github-actions/${action.id}`} class="block group">
                                 <div class="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden hover:border-blue-500/50 hover:bg-slate-900/80 transition-all duration-300">
                                     <div class="p-6">
                                         <div class="flex items-start justify-between mb-6">
@@ -69,9 +70,9 @@ const GithubActions: Component = () => {
                                                 <span class="px-3 py-1 text-xs text-slate-500">+{action.features.length - 3} more</span>
                                             )}
                                         </div>
-                                    </div>
-                                </div>
-                            </a>
+</div>
+                            </div>
+                        </A>
                         ))}
 
                         {/* Placeholder for future actions */}

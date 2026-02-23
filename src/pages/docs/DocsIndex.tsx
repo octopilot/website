@@ -1,4 +1,5 @@
 import type { Component } from 'solid-js';
+import { A } from '@solidjs/router';
 import PageMeta from '../../components/seo/PageMeta';
 import DocsLayout from '../../components/docs/DocsLayout';
 
@@ -38,10 +39,10 @@ const DocsIndex: Component = () => {
                     </p>
                     <ul class="space-y-3 mb-8">
                         <li>
-                            <a href="/docs/core-concepts" class="text-blue-400 hover:text-blue-300 flex items-center gap-2">
+                            <A href="/docs/core-concepts" class="text-blue-400 hover:text-blue-300 flex items-center gap-2">
                                 <i class="fa-solid fa-arrow-right text-xs"></i>
                                 Security Model & Architecture
-                            </a>
+                            </A>
                         </li>
                     </ul>
                 </div>
@@ -59,16 +60,16 @@ const DocsIndex: Component = () => {
                     </p>
                     <ul class="space-y-3 mb-8">
                         <li>
-                            <a href="/docs/key-attestation" class="text-emerald-400 hover:text-emerald-300 flex items-center gap-2">
+                            <A href="/docs/key-attestation" class="text-emerald-400 hover:text-emerald-300 flex items-center gap-2">
                                 <i class="fa-solid fa-arrow-right text-xs"></i>
                                 Key Attestation & Enrollment
-                            </a>
+                            </A>
                         </li>
                         <li>
-                            <a href="/docs/admin-configuration" class="text-purple-400 hover:text-purple-300 flex items-center gap-2">
+                            <A href="/docs/admin-configuration" class="text-purple-400 hover:text-purple-300 flex items-center gap-2">
                                 <i class="fa-solid fa-arrow-right text-xs"></i>
                                 Admin Configuration & Setup
-                            </a>
+                            </A>
                         </li>
                         {/* Placeholder for future guides */}
                         <li class="opacity-50 cursor-not-allowed text-slate-500 flex items-center gap-2">
@@ -90,10 +91,10 @@ const DocsIndex: Component = () => {
                     </p>
                     <ul class="space-y-3 mb-8">
                         <li>
-                            <a href="/docs/github-actions" class="text-purple-400 hover:text-purple-300 flex items-center gap-2">
+                            <A href="/docs/github-actions" class="text-purple-400 hover:text-purple-300 flex items-center gap-2">
                                 <i class="fa-solid fa-arrow-right text-xs"></i>
                                 GitHub Actions
-                            </a>
+                            </A>
                         </li>
                         <li>
                             <a href="https://github.com/octopilot/secret-controller-manager" target="_blank" class="text-slate-400 hover:text-slate-300 flex items-center gap-2">

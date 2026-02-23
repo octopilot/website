@@ -1,4 +1,5 @@
 import { type Component, For, Show } from 'solid-js';
+import { A } from '@solidjs/router';
 
 export interface TocItem {
     id: string;
@@ -61,12 +62,12 @@ const OnThisPage: Component<OnThisPageProps> = (props) => {
                         <For each={props.relatedLinks}>
                             {(link) => (
                                 <li>
-                                    <a
+                                    <A
                                         href={link.href}
                                         class="text-sm text-slate-400 hover:text-purple-400 transition-colors block leading-snug"
                                     >
                                         {link.text}
-                                    </a>
+                                    </A>
                                 </li>
                             )}
                         </For>
