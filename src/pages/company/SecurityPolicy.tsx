@@ -1,4 +1,5 @@
 import type { Component } from 'solid-js';
+import { A } from '@solidjs/router';
 import PageMeta from '../../components/seo/PageMeta';
 
 const SecurityPolicy: Component = () => {
@@ -40,7 +41,7 @@ const SecurityPolicy: Component = () => {
 
                     <h2 class="text-2xl font-bold text-white mt-8 mb-4">Compliance</h2>
                     <p>
-                        For information about our compliance certifications and invoicing, please visit our <a href="/compliance" class="text-octo-accent hover:underline">Compliance page</a>.
+                        For information about our compliance certifications and invoicing, please visit our <A href="/compliance" class="text-octo-accent hover:underline">Compliance page</A>.
                     </p>
                 </div>
             </div>

@@ -1,4 +1,5 @@
 import type { Component } from 'solid-js';
+import { A } from '@solidjs/router';
 import PageMeta from '../../components/seo/PageMeta';
 import KeyAttestationHero from '../../components/docs/key-attestation/KeyAttestationHero';
 import AttestationFlow from '../../components/docs/key-attestation/AttestationFlow';
@@ -36,10 +37,10 @@ const KeyAttestation: Component = () => {
                 <div class="px-8 text-center">
                     <h3 class="text-2xl font-bold text-white mb-4">Admin Config</h3>
                     <p class="text-slate-400 mb-6">Need to configure attestation policies or email domains for your organization?</p>
-                    <a href="/documentation/admin-configuration" class="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 font-medium">
+                    <A href="/docs/admin-configuration" class="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 font-medium">
                         View Admin Configuration Guide
                         <i class="fa-solid fa-arrow-right text-sm"></i>
-                    </a>
+                    </A>
                 </div>
             </div>
 

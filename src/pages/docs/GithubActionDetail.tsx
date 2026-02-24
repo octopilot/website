@@ -1,37 +1,39 @@
 import type { Component } from 'solid-js';
-import { useParams } from '@solidjs/router';
+import { useParams, A } from '@solidjs/router';
 import { For, Show } from 'solid-js';
 import PageMeta from '../../components/seo/PageMeta';
 import DocsLayout from '../../components/docs/DocsLayout';
 import DocsCTA from '../../components/docs/DocsCTA';
 import { githubActions } from '../../data/github-actions';
 
+const tocItems = [
+    { id: "overview", text: "Overview" },
+    { id: "inputs", text: "Inputs" },
+    { id: "usage", text: "Usage" },
+    { id: "gotchas", text: "Known Gotchas" }
+];
+
 const GithubActionDetail: Component = () => {
     const params = useParams();
-    const action = () => githubActions.find(a => a.id === params.id);
-
-    const tocItems = [
-        { id: "overview", text: "Overview" },
-        { id: "inputs", text: "Inputs" },
-        { id: "usage", text: "Usage" },
-        { id: "gotchas", text: "Known Gotchas" }
-    ];
-
-    const relatedActions = () => githubActions
-        .filter(a => a.id !== params.id)
-        .map(a => ({
-            text: a.title,
-            href: `/docs/github-actions/${a.id}`
-        }));
 
     return (
+        <Show when={params.id} keyed>
+            {(id) => {
+                const action = () => githubActions.find(a => a.id === id);
+                const relatedActions = () => githubActions
+                    .filter(a => a.id !== id)
+                    .map(a => ({
+                        text: a.title,
+                        href: `/docs/github-actions/${a.id}`
+                    }));
+                return (
         <DocsLayout tocItems={tocItems} relatedLinks={relatedActions()}>
             <Show when={action()}>
                 {actionData => (
                     <PageMeta
                         title={`${actionData().title} — GitHub Action`}
                         description={actionData().description.slice(0, 160)}
-                        path={`/docs/github-actions/${params.id}`}
+                        path={`/docs/github-actions/${id}`}
                     />
                 )}
             </Show>
@@ -46,7 +48,7 @@ const GithubActionDetail: Component = () => {
                         {/* Header */}
                         <div id="overview" class="scroll-mt-24 mb-12">
                             <div class="flex items-center gap-2 text-slate-400 text-sm mb-6">
-                                <a href="/docs/github-actions" class="hover:text-white transition-colors">GitHub Actions</a>
+                                <A href="/docs/github-actions" class="hover:text-white transition-colors">GitHub Actions</A>
                                 <i class="fa-solid fa-chevron-right text-xs"></i>
                                 <span class="text-blue-400">{actionData().title}</span>
                             </div>
@@ -215,6 +217,9 @@ const GithubActionDetail: Component = () => {
             </Show>
             <DocsCTA />
         </DocsLayout>
+                );
+            }}
+        </Show>
     );
 };
 

@@ -1,4 +1,5 @@
 import type { Component } from 'solid-js';
+import { A } from '@solidjs/router';
 
 const QuickstartSteps: Component = () => {
     return (
@@ -212,18 +213,18 @@ const QuickstartSteps: Component = () => {
                         Your repository-local encryption is now live. Secrets are encrypted in Git, decrypted at runtime by the Kubernetes controller, and never shared across repositories. Next steps:
                     </p>
                     <div class="flex flex-col sm:flex-row items-center gap-4">
-                        <a href="/documentation/github-actions" class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2">
+                        <A href="/docs/github-actions" class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2">
                             <i class="fa-solid fa-code-branch"></i>
                             Set Up CI/CD Integration
-                        </a>
+                        </A>
                         <button class="w-full sm:w-auto px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2">
                             <i class="fa-solid fa-users"></i>
                             Configure Multi-Team Policies
                         </button>
-                        <a href="/documentation" class="w-full sm:w-auto px-6 py-3 border border-slate-700 hover:border-slate-600 text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2">
+                        <A href="/docs" class="w-full sm:w-auto px-6 py-3 border border-slate-700 hover:border-slate-600 text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2">
                             <i class="fa-solid fa-book"></i>
                             Read Full Documentation
-                        </a>
+                        </A>
                     </div>
                 </div>
             </div>
