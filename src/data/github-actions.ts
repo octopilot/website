@@ -40,24 +40,28 @@ export const githubActions: GithubAction[] = [
     title: "Octopilot Build",
     path: "octopilot/actions/octopilot@main",
     version: "v1",
-    description: "Builds and pushes multi-architecture container images using Octopilot Pipeline Tools. Reads skaffold.yaml, builds all artifacts with Cloud Native Buildpacks or Dockerfile builders, assembles OCI manifest lists, and outputs the image digest for downstream attestation and promotion steps.",
+    description: "Builds and pushes multi-architecture container images using Octopilot Pipeline Tools. Reads skaffold.yaml, builds all artifacts with Cloud Native Buildpacks or Dockerfile builders, assembles OCI manifest lists, and writes build_result.json. Supports either a target registry (e.g. ghcr.io/org) or ephemeral ttl.sh builds via ttl-uuid. Outputs digest and full image tag for downstream attestation and promotion.",
     features: [
       "Multi-arch manifest list (amd64 + arm64)",
-      "Direct Pack library integration",
-      "SBOM generation",
-      "Build bypass for bootstrapping"
+      "Registry or ttl.sh ephemeral (ttl-uuid / ttl-tag)",
+      "Single-artifact fan-out (artifact input for matrix)",
+      "SBOM generation; build bypass for bootstrapping"
     ],
     inputs: [
-      { name: "registry", description: "Target registry and org (e.g. ghcr.io/octopilot)", required: true },
+      { name: "registry", description: "Target registry and org (e.g. ghcr.io/octopilot). Ignored when ttl-uuid is set.", required: false },
+      { name: "ttl-uuid", description: "When set, push to ttl.sh/<ttl-uuid>-<suffix>:<ttl-tag> and write build_result.json (ephemeral). Overrides registry.", required: false },
+      { name: "ttl-tag", description: "Tag for ttl.sh when ttl-uuid is set (e.g. 1h, 24h)", required: false, default: "1h" },
       { name: "version", description: "Version tag applied to pushed images (defaults to GITHUB_REF_NAME)", required: false },
       { name: "platforms", description: "Comma-separated platform list (e.g. linux/amd64,linux/arm64)", required: false, default: "linux/amd64" },
-      { name: "op_version", description: "Version of the ghcr.io/octopilot/op builder image to use", required: false, default: "latest" },
+      { name: "artifact", description: "Build only this artifact (exact image name from skaffold) — for matrix/fan-out integration builds", required: false },
+      { name: "op_version", description: "Version of the ghcr.io/octopilot/op image to use", required: false, default: "v1.0.4" },
       { name: "sbom_output", description: "Directory for SBOM output; packaged as sbom_output.tar.gz when non-empty", required: false, default: "dist/sbom" },
       { name: "op_binary", description: "Path to a pre-built op binary (only used when build_bypass is true)", required: false, default: "op" },
       { name: "build_bypass", description: "Run op directly instead of inside a container — used for bootstrapping", required: false, default: "false" }
     ],
     outputs: [
-      { name: "digest", description: "sha256 digest of the application image — ready for actions/attest-build-provenance" }
+      { name: "digest", description: "sha256 digest of the application image — ready for actions/attest-build-provenance" },
+      { name: "tag", description: "Full image ref from build_result.json (e.g. ttl.sh/<uuid>-<suffix>:<tag>@sha256:... or registry/image:tag@sha256:...)" }
     ],
     example: `name: Release
 
@@ -262,11 +266,16 @@ jobs:
     ],
     inputs: [
       { name: "version", description: "Release version (e.g. 1.2.3)", required: true },
-      { name: "provider", description: "LLM provider (anthropic, openai)", required: true },
-      { name: "api_key", description: "API Key for the provider", required: true }
+      { name: "since_tag", description: "Git ref (tag or commit) to list commits after. Default: previous tag from git describe", required: false },
+      { name: "template_path", description: "Path to a Markdown template (relative to repo root). Placeholder {{VERSION}} is replaced.", required: false },
+      { name: "template", description: "Inline template content. Ignored if template_path is set.", required: false },
+      { name: "provider", description: "LLM provider (anthropic, openai)", required: false, default: "anthropic" },
+      { name: "model", description: "Model name (e.g. gpt-4o-mini, claude-sonnet). Optional; action uses defaults.", required: false },
+      { name: "output_filename", description: "Output file name under repo root", required: false, default: "release_notes.md" }
     ],
     outputs: [
-      { name: "body_file", description: "Path to the generated release notes file" }
+      { name: "body_file", description: "Path to the generated release notes file (relative to repo root)" },
+      { name: "body", description: "Release notes body content" }
     ],
     example: `name: Release
 on:
@@ -515,8 +524,8 @@ jobs:
     inputs: [
       { name: "ttl", description: "Time to live for the image (e.g. 2h, 1d)", required: false, default: "2h" },
       { name: "platform", description: "Target platform (e.g. linux/amd64)", required: false, default: "linux/amd64" },
-      { name: "registry", description: "Override the default ttl.sh image name", required: false, default: "" },
-      { name: "op_version", description: "Version of the op builder image to use", required: false, default: "latest" }
+      { name: "registry", description: "Override the default ttl.sh image name (defaults to ttl.sh/owner-repo-sha)", required: false, default: "" },
+      { name: "op_version", description: "Version of the op image to use", required: false, default: "v1.0.4" }
     ],
     outputs: [
       { name: "image_ref", description: "Full reference to the pushed ephemeral image (e.g. ttl.sh/org-repo-abc1234:2h)" }
@@ -643,7 +652,7 @@ jobs:
       "Multi-platform support"
     ],
     inputs: [
-      { name: "kubectl_version", description: "Kubectl version", required: false, default: "v1.29.1" },
+      { name: "kubectl_version", description: "Kubectl version", required: false, default: "1.32.2" },
       { name: "sops_version", description: "SOPS version", required: false, default: "3.8.1" },
       { name: "kustomize_version", description: "Kustomize version", required: false, default: "5.3.0" },
       { name: "yq_version", description: "Yq version", required: false, default: "4.40.5" }
@@ -853,5 +862,194 @@ jobs:
     icon: "fa-microsoft",
     iconColor: "text-blue-600",
     iconBg: "bg-blue-600/10"
+  },
+  {
+    id: "integration-build-artifact",
+    title: "Integration Build Artifact",
+    path: "octopilot/actions/integration-build-artifact@main",
+    version: "v1",
+    description: "Builds one integration matrix item (Docker or Buildpack image, or Helm chart) and writes the resulting image/chart ref to an output file. Used by integration workflows that fan out over a matrix: each job builds one artifact via the Octopilot action and writes key=value lines for the workflow to upload and merge.",
+    features: [
+      "Matrix-friendly: one artifact per call",
+      "Supports type image (docker/pack) and chart (helm via octopilot)",
+      "Writes output_key=tag to a file for merge-build-results",
+      "Uses ttl.sh when ttl-uuid is provided"
+    ],
+    inputs: [
+      { name: "artifact", description: "JSON object for one matrix item (type, build_method, context, suffix, output_key, image, path?, dockerfile?, builder?, build_env?)", required: true },
+      { name: "ttl-uuid", description: "UUID for ttl.sh image/chart naming", required: true },
+      { name: "output-path", description: "Path to write key=value lines (e.g. outputs.txt)", required: false, default: "outputs.txt" },
+      { name: "op_version", description: "Op image version (e.g. v1.0.4)", required: false, default: "v1.0.4" }
+    ],
+    example: `# Typically used from a matrix job that receives one artifact per strategy item
+- name: Build one artifact
+  id: build
+  uses: octopilot/actions/integration-build-artifact@main
+  with:
+    artifact: \${{ toJson(matrix.artifact) }}
+    ttl-uuid: \${{ needs.validate.outputs.uuid }}
+
+- name: Upload artifact ref
+  uses: actions/upload-artifact@v4
+  with:
+    name: build-\${{ matrix.artifact.output_key }}
+    path: \${{ inputs.output-path }}`,
+    icon: "fa-puzzle-piece",
+    iconColor: "text-cyan-400",
+    iconBg: "bg-cyan-500/10"
+  },
+  {
+    id: "integration-validate",
+    title: "Integration Validate",
+    path: "octopilot/actions/integration-validate@main",
+    version: "v1",
+    description: "Validates the primary build artifact for integration: uses pipeline-context from detect-contexts, sets up the toolchain (Rust/Go), builds release, optionally runs a smoke check, and outputs a UUID for ephemeral artifact naming (e.g. ttl.sh). Use before fan-out integration-build-artifact jobs.",
+    features: [
+      "Resolves primary build context from pipeline-context.matrix",
+      "Rust and Go toolchain setup and release build",
+      "Optional smoke run with expected pattern",
+      "Outputs UUID for ttl.sh naming"
+    ],
+    inputs: [
+      { name: "pipeline-context", description: "Consolidated CI context (JSON) from detect-contexts", required: true },
+      { name: "validate-context-index", description: "Index into pipeline-context.matrix (default 0). First non-helm artifact used.", required: false, default: "0" },
+      { name: "smoke-binary-path", description: "Path to built binary for smoke run (e.g. target/release/myapp)", required: false },
+      { name: "smoke-expect-pattern", description: "Pattern to grep for in smoke output; requires smoke-binary-path", required: false }
+    ],
+    outputs: [
+      { name: "uuid", description: "Generated UUID for ephemeral artifact naming (e.g. ttl.sh)" }
+    ],
+    example: `jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      uuid: \${{ steps.validate.outputs.uuid }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: detect
+        uses: octopilot/actions/detect-contexts@main
+      - id: validate
+        uses: octopilot/actions/integration-validate@main
+        with:
+          pipeline-context: \${{ steps.detect.outputs.pipeline-context }}
+
+  build:
+    needs: validate
+    strategy:
+      matrix: \${{ fromJson(needs.detect.outputs.pipeline-context).matrix }}
+    steps:
+      - uses: octopilot/actions/integration-build-artifact@main
+        with:
+          artifact: \${{ toJson(matrix) }}
+          ttl-uuid: \${{ needs.validate.outputs.uuid }}`,
+    icon: "fa-check-double",
+    iconColor: "text-emerald-400",
+    iconBg: "bg-emerald-500/10"
+  },
+  {
+    id: "merge-build-results",
+    title: "Merge Build Results",
+    path: "octopilot/actions/merge-build-results@main",
+    version: "v1",
+    description: "Finds all build_result.json files under a directory (e.g. after downloading integration job artifacts) and merges them into a single build_result.json without data loss. Preserves every build entry in order. Use after fan-out integration builds to produce one contract file.",
+    features: [
+      "Scans directory for build_result.json files",
+      "Merges all .builds[] into one array (order preserved)",
+      "Outputs path and count for downstream steps"
+    ],
+    inputs: [
+      { name: "directory", description: "Directory to search for build_result.json (e.g. artifact-outputs)", required: false, default: "artifact-outputs" },
+      { name: "output-path", description: "Path for the merged build_result.json", required: false, default: "build_result.json" }
+    ],
+    outputs: [
+      { name: "path", description: "Path to the merged build_result.json (empty if no files found)" },
+      { name: "count", description: "Number of build entries in the merged result" }
+    ],
+    example: `- name: Download all build artifacts
+  uses: actions/download-artifact@v4
+  with:
+    pattern: build-*
+
+- name: Merge build results
+  id: merge
+  uses: octopilot/actions/merge-build-results@main
+  with:
+    directory: artifact-outputs
+
+- name: Use merged result
+  run: echo "Merged \${{ steps.merge.outputs.count }} builds to \${{ steps.merge.outputs.path }}"`,
+    icon: "fa-code-merge",
+    iconColor: "text-violet-400",
+    iconBg: "bg-violet-500/10"
+  },
+  {
+    id: "verify-registry",
+    title: "Verify Registry TLS",
+    path: "octopilot/actions/verify-registry@main",
+    version: "v1",
+    description: "Waits for the octopilot registry-tls service container to become ready, configures the Docker daemon to trust its self-signed certificate (insecure-registries), and optionally validates push/pull. Use in any job that declares the registry as a GitHub Actions service container.",
+    features: [
+      "Configures Docker daemon for self-signed TLS",
+      "Waits for registry-tls health or v2/ endpoint",
+      "Optional test push/pull validation",
+      "Outputs registry_url for downstream steps"
+    ],
+    inputs: [
+      { name: "port", description: "Host port the registry is exposed on (must match service ports)", required: false, default: "5001" },
+      { name: "max_attempts", description: "Health-check retries before failing", required: false, default: "15" },
+      { name: "retry_delay", description: "Seconds between attempts", required: false, default: "2" },
+      { name: "test_push", description: "Push a small test image to verify write access", required: false, default: "true" }
+    ],
+    outputs: [
+      { name: "registry_url", description: "Full registry URL (e.g. localhost:5001)" }
+    ],
+    example: `jobs:
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      registry:
+        image: ghcr.io/octopilot/registry-tls:latest
+        ports:
+          - 5001:5000
+    steps:
+      - uses: actions/checkout@v4
+      - id: reg
+        uses: octopilot/actions/verify-registry@main
+      - name: Build and push to local registry
+        run: op build --repo \${{ steps.reg.outputs.registry_url }} --push`,
+    icon: "fa-shield-halved",
+    iconColor: "text-green-400",
+    iconBg: "bg-green-500/10"
+  },
+  {
+    id: "setup-flux",
+    title: "Setup Flux",
+    path: "octopilot/actions/setup-flux@main",
+    version: "v1",
+    description: "Sets up the Flux CLI, installs Flux in the cluster, and exports the installed components to a file (e.g. for GitOps manifests). Use in workflows that need Flux for deployment or reconciliation.",
+    features: [
+      "Flux CLI via fluxcd/flux2/action",
+      "flux install --export to a file",
+      "kubectl apply and wait for source/helm controllers"
+    ],
+    inputs: [
+      { name: "export_path", description: "Path to write flux install --export output (e.g. k8s/deployment/flux-system/gotk-components.yaml)", required: true },
+      { name: "version", description: "Flux CLI version", required: false, default: "latest" }
+    ],
+    example: `steps:
+  - uses: actions/checkout@v4
+
+  - name: Setup Flux
+    uses: octopilot/actions/setup-flux@main
+    with:
+      export_path: k8s/flux-system/gotk-components.yaml
+
+  - name: Commit Flux manifests
+    run: |
+      git add k8s/flux-system
+      git commit -m "chore: update Flux components" || true`,
+    icon: "fa-bolt",
+    iconColor: "text-purple-400",
+    iconBg: "bg-purple-500/10"
   }
 ];

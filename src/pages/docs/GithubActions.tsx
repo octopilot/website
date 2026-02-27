@@ -18,7 +18,7 @@ const GithubActions: Component = () => {
         <DocsLayout tocItems={tocItems}>
             <PageMeta
                 title="GitHub Actions Reference"
-                description="Complete reference for all Octopilot GitHub Actions: detect-contexts, lint, test, octopilot build, janitor, release notes, SOPS decrypt, Kubernetes auth, and cloud network access actions."
+                description="Complete reference for all Octopilot GitHub Actions: octopilot build (registry or ttl.sh), detect-contexts, lint, test, integration-validate, integration-build-artifact, merge-build-results, verify-registry, setup-flux, setup-tools, janitor, release, SOPS decrypt, Kubernetes auth, and cloud network access actions."
                 path="/docs/github-actions"
             />
             <article class="prose prose-invert max-w-none">
@@ -30,7 +30,7 @@ const GithubActions: Component = () => {
 
                     <h1 class="text-4xl lg:text-5xl font-bold text-white mb-6">GitHub Actions</h1>
                     <p class="text-xl text-slate-400 leading-relaxed">
-                        Octopilot provides a suite of official GitHub Actions to automate your GitOps workflows. These actions are open source and located in the <a href="https://github.com/octopilot/octopilot-actions" target="_blank" class="text-blue-400 hover:underline">octopilot/octopilot-actions</a> repository.
+                        Octopilot provides a suite of official GitHub Actions to automate your GitOps workflows. These actions are open source and located in the <a href="https://github.com/octopilot/actions" target="_blank" class="text-blue-400 hover:underline">octopilot/actions</a> repository.
                     </p>
                 </div>
 
@@ -82,7 +82,7 @@ const GithubActions: Component = () => {
                             </div>
                             <h3 class="text-lg font-bold text-slate-400 mb-2">Have an action idea?</h3>
                             <p class="text-slate-500 text-sm max-w-md mx-auto">
-                                We are continuously expanding our suite of actions. Check the <a href="https://github.com/octopilot/octopilot-actions" class="text-blue-400 hover:text-blue-300">repository</a> for updates or to contribute.
+                                We are continuously expanding our suite of actions. Check the <a href="https://github.com/octopilot/actions" class="text-blue-400 hover:text-blue-300">repository</a> for updates or to contribute.
                             </p>
                         </div>
                     </div>
