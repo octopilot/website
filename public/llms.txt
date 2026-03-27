@@ -32,6 +32,7 @@ All actions live at `github.com/octopilot/actions` and are used via
 
 ### Utility actions
 
+- [kotlin-lint](https://octopilot.app/docs/github-actions/kotlin-lint): Standalone ktlint for plain Kotlin repos — Checkstyle XML plus PR annotations (`yutailang0119/action-ktlint`). No `pipeline-context` or Gradle. Inputs: `working-directory` (default `.`), `ktlint-version`, `ignore-warnings`, `report-directory`, `report-filename`, `kotlin-extra-args`, `fail-on-error`.
 - [release](https://octopilot.app/docs/github-actions/release): AI-powered release notes generator from commit history. Supports Anthropic and OpenAI. Output: `body_file` (path to Markdown file).
 - [sops-decrypt](https://octopilot.app/docs/github-actions/sops-decrypt): Decrypts SOPS-encrypted files (YAML, JSON, dotenv) using GPG or AGE keys.
 - [setup-tools](https://octopilot.app/docs/github-actions/setup-tools): Installs kubectl, sops, kustomize, yq with version pinning.

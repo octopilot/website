@@ -18,7 +18,7 @@ const GithubActions: Component = () => {
         <DocsLayout tocItems={tocItems}>
             <PageMeta
                 title="GitHub Actions Reference"
-                description="Complete reference for all Octopilot GitHub Actions: octopilot build (registry or ttl.sh), detect-contexts, lint, test, integration-validate, integration-build-artifact, merge-build-results, verify-registry, setup-flux, setup-tools, janitor, release, SOPS decrypt, Kubernetes auth, and cloud network access actions."
+                description="Complete reference for all Octopilot GitHub Actions: octopilot build (registry or ttl.sh), detect-contexts, lint, kotlin-lint (standalone ktlint), test, integration-validate, integration-build-artifact, merge-build-results, verify-registry, setup-flux, setup-tools, janitor, release, SOPS decrypt, Kubernetes auth, and cloud network access actions."
                 path="/docs/github-actions"
             />
             <article class="prose prose-invert max-w-none">

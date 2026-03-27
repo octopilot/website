@@ -201,6 +201,121 @@ GOTOOLCHAIN="go$(grep '^go ' go.mod | awk '{print $2}')" \\
     iconBg: "bg-yellow-500/10"
   },
   {
+    id: "kotlin-lint",
+    title: "Kotlin lint (ktlint)",
+    path: "octopilot/actions/kotlin-lint@main",
+    version: "v1",
+    description:
+      "Standalone ktlint for plain Kotlin repositories: installs the ktlint binary, writes a Checkstyle XML report, and publishes GitHub annotations via yutailang0119/action-ktlint. Does not require detect-contexts, pre-commit, or Gradle — only checkout and this action. Use optional working-directory for monorepo packages.",
+    features: [
+      "No pipeline-context or Octopilot wiring",
+      "PR annotations from Checkstyle XML",
+      "Optional subfolder (working-directory)",
+      "Configurable ktlint version and fail-on-error"
+    ],
+    inputs: [
+      {
+        name: "working-directory",
+        description:
+          "Directory where ktlint runs (`.` for repo root, or a subfolder such as a Kotlin package in a monorepo).",
+        required: false,
+        default: "."
+      },
+      {
+        name: "ktlint-version",
+        description: "ktlint release tag from pinterest/ktlint (e.g. 1.7.1).",
+        required: false,
+        default: "1.7.1"
+      },
+      {
+        name: "ignore-warnings",
+        description: "Ignore warning-severity findings in action-ktlint annotations.",
+        required: false,
+        default: "true"
+      },
+      {
+        name: "report-directory",
+        description: "Directory for the Checkstyle XML report, relative to working-directory.",
+        required: false,
+        default: "build"
+      },
+      {
+        name: "report-filename",
+        description: "Report filename under report-directory.",
+        required: false,
+        default: "ktlint-report.xml"
+      },
+      {
+        name: "kotlin-extra-args",
+        description: "Extra arguments passed to ktlint (space-separated).",
+        required: false,
+        default: ""
+      },
+      {
+        name: "fail-on-error",
+        description:
+          "When true, the annotation step fails the job if the report contains error-severity issues.",
+        required: false,
+        default: "true"
+      }
+    ],
+    example: `name: ktlint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.kt'
+      - '**.kts'
+      - '.github/workflows/ktlint.yml'
+  pull_request:
+    paths:
+      - '**.kt'
+      - '**.kts'
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  ktlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: octopilot/actions/kotlin-lint@main
+        # Optional:
+        # with:
+        #   working-directory: packages/my-lib
+        #   ktlint-version: '1.7.1'`,
+    gotchas: [
+      {
+        language: "Android / Gradle",
+        title: "Prefer ./gradlew ktlintCheck when the project uses the ktlint Gradle plugin",
+        symptom:
+          "Standalone ktlint disagrees with local or CI results that use org.jlleitschuh.gradle.ktlint because rules or classpath differ.",
+        fix: "For Gradle-first Android/Kotlin projects, run ./gradlew ktlintCheck in CI so the same plugin configuration and baselines apply. Use kotlin-lint for raw Kotlin repos or when you only need the binary plus annotations.",
+        code: `- uses: gradle/actions/setup-gradle@v4
+- run: ./gradlew ktlintCheck`
+      },
+      {
+        language: "GitHub Actions",
+        title: "Invalid Argument — ref missing after @ (octopilot/actions/kotlin-lint@)",
+        symptom:
+          "Workflow parse fails: Expected format {org}/{repo}[/path]@ref. Actual 'octopilot/actions/kotlin-lint@' with nothing after @.",
+        fix: "The branch or tag after @ is required. Use a literal ref (e.g. octopilot/actions/kotlin-lint@main). If you use ${{ inputs.x }} or a repository variable for the ref, ensure it is never empty — empty overrides can drop the default.",
+        code: `# Good
+uses: octopilot/actions/kotlin-lint@main
+
+# Risky — only if inputs.ref defaults to main and callers never pass ''
+uses: octopilot/actions/kotlin-lint@\${{ inputs.ref || 'main' }}`
+      }
+    ],
+    icon: "fa-code",
+    iconColor: "text-orange-400",
+    iconBg: "bg-orange-500/10"
+  },
+  {
     id: "test",
     title: "Test",
     path: "octopilot/actions/test@main",
