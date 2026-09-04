@@ -1051,5 +1051,123 @@ jobs:
     icon: "fa-bolt",
     iconColor: "text-purple-400",
     iconBg: "bg-purple-500/10"
+  },
+  {
+    id: "scale-min-replicas",
+    title: "Scale minReplicas",
+    path: "octopilot/actions/scale-min-replicas@main",
+    version: "v1",
+    description:
+      "DST- and timezone-aware day/night scaling of a Helm values key (typically minReplicas). Decides the target value from the local wall clock in any IANA timezone, writes it into a values file, and commits + pushes directly to your branch. GitHub schedule cron is fixed-UTC and cannot be DST-aware on its own — this action computes a safe UTC cron band (the hours that are day/night under every offset the zone has used) so winter and summer both land on the correct decision, and reprints that band on every run so a stale schedule is visible immediately. Optionally holds the nighttime value on Sundays (no morning scale-up).",
+    features: [
+      "DST-safe: decision from local wall clock, tz database applied",
+      "Safe UTC cron band computed + reprinted every run",
+      "Sunday rest hold (no morning scale-up)",
+      "Explicit override for manual dispatches",
+      "Self-healing zoneinfo on minimal runners (tzdata fallback)",
+      "No-op skips commit when already at target"
+    ],
+    inputs: [
+      { name: "values_file", description: "Path to the Helm values file, relative to the workspace root.", required: true },
+      { name: "key", description: "YAML key to update (matched at any indentation, inline comment preserved).", required: false, default: "minReplicas" },
+      { name: "timezone", description: "IANA timezone of the business location (e.g. Europe/Berlin, America/New_York).", required: true },
+      { name: "sunrise_hour", description: "Local hour (0-23) the day window opens.", required: true },
+      { name: "sunset_hour", description: "Local hour (0-23) the day window closes. May be <= sunrise_hour for wrap-around windows.", required: true },
+      { name: "daytime_min_replicas", description: "Value applied during the day window.", required: true },
+      { name: "nighttime_min_replicas", description: "Value applied outside the day window.", required: true },
+      { name: "sunday_rest", description: "When 'true', Sundays always resolve to the nighttime value.", required: false, default: "false" },
+      { name: "min_replicas", description: "Explicit override (manual dispatch). Empty = auto day/night decision.", required: false, default: "" },
+      { name: "commit_prefix", description: "Commit message prefix.", required: false, default: "chore(prod)" },
+      { name: "branch", description: "Branch to check out and push to.", required: false, default: "master" },
+      { name: "token", description: "GitHub token with contents:write.", required: false },
+      { name: "event", description: "Commit message tag: 'schedule' or 'workflow_dispatch'.", required: false, default: "schedule" },
+      { name: "cron_band", description: "Print the safe UTC cron hours for this window on every run.", required: false, default: "true" }
+    ],
+    outputs: [
+      { name: "decision", description: "daytime, nighttime, sunday-rest, or explicit" },
+      { name: "resolved_min_replicas", description: "The value applied (or that would be applied)" },
+      { name: "local_time", description: "Local wall-clock time at decision (ISO 8601)" },
+      { name: "utc_offset", description: "UTC offset in effect at decision time, DST applied" },
+      { name: "weekday", description: "Weekday name at decision time" },
+      { name: "changed", description: "true if the values file was modified" },
+      { name: "commit_sha", description: "SHA of the created commit; empty on no-op" },
+      { name: "cron_band", description: "Safe UTC cron hours for sunrise/sunset (informational)" }
+    ],
+    example: `name: Scale minReplicas (prod, Europe/Berlin)
+on:
+  schedule:
+    - cron: '0 7 * * *'    # sunrise: 08:00 CET / 09:00 CEST local
+    - cron: '0 19 * * *'   # sunset: 20:00 CET / 21:00 CEST local
+  workflow_dispatch:
+    inputs:
+      min_replicas:
+        description: 'Explicit minReplicas override (empty = auto)'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  scale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: octopilot/actions/scale-min-replicas@main
+        with:
+          values_file: deployment-configuration/profiles/prod-cf/helm/values.yaml
+          timezone: Europe/Berlin
+          sunrise_hour: 8
+          sunset_hour: 20
+          daytime_min_replicas: 2
+          nighttime_min_replicas: 1
+          sunday_rest: true
+          min_replicas: \${{ inputs.min_replicas }}
+          event: \${{ github.event_name }}`,
+    gotchas: [
+      {
+        language: "Scheduling",
+        title: "Pick your cron hours from the printed band — not from the timezone's 'obvious' offset",
+        symptom:
+          "A schedule like 05:00 UTC / 22:00 UTC drifts against the local day across DST: 22:00 UTC is 23:00 in summer, i.e. hours after the business day ends, so the night scale-down fires too late (or the morning scale-up fires before local opening).",
+        fix:
+          "Choose UTC cron hours inside the safe band the action prints (and writes to the cron_band output). The band is the set of UTC hours whose local time is day (or night) under EVERY offset the zone has used, sampled over 2 years. Rule of thumb: sunrise cron ≈ sunrise − winter offset, sunset cron ≈ sunset − summer offset. For Europe/Berlin 08:00–20:00: 07:00 UTC and 19:00 UTC (winter fires exactly at the boundary, summer one hour later — same decision both seasons).",
+        code: `# Berlin 08:00–20:00 → safe band (printed every run):
+#   Sunrise cron - safe UTC hours: [7..17]  (recommended 07)
+#   Sunset cron  - safe UTC hours: [19..5]  (recommended 19)
+on:
+  schedule:
+    - cron: '0 7 * * *'
+    - cron: '0 19 * * *'`
+      },
+      {
+        language: "Self-hosted runners",
+        title: "System python3 has no zoneinfo data (minimal / air-gapped runners)",
+        symptom:
+          "Resolve step fails with: unknown IANA timezone 'Europe/Berlin' (a ZoneInfoNotFoundError), even though the zone name is correct — the runner image has no /usr/share/zoneinfo data and its python is 3.10.",
+        fix:
+          "The action detects the missing data before resolving and self-heals by installing the tzdata pip package to a temp dir (pip install --target, which works under PEP 668 and in venvs) and re-probing with it on PYTHONPATH. It only fails loudly if both the system data and the pip fallback are unavailable (e.g. no network). If your runner has no egress, bake tzdata into the runner image instead.",
+        code: `# Action step (runs automatically before resolve):
+System python3 has no zoneinfo data for Europe/Berlin - installing the tzdata package fallback
+tzdata package fallback works for Europe/Berlin`
+      },
+      {
+        language: "Push auth",
+        title: "fatal: could not read Username for 'https://github.com' on push",
+        symptom:
+          "The decision and file update succeed and a commit is made locally, but the push fails with exit 128 asking for a username — auth for the push is missing.",
+        fix:
+          "Use actions/checkout's default credential behavior (the token is already injected into the git remote) and a plain git push — do not set persist-credentials: false and then try to re-auth with a manual Authorization header, which self-hosted runners may not honor. The workflow must grant contents: write so GITHUB_TOKEN can push.",
+        code: `- uses: actions/checkout@v4
+  with:
+    ref: master          # token default is fine; no persist-credentials: false
+...
+# push step:
+git push origin "HEAD:$BRANCH"`
+      }
+    ],
+    icon: "fa-mountain-sun",
+    iconColor: "text-amber-400",
+    iconBg: "bg-amber-500/10"
   }
 ];
